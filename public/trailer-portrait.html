@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Point Club Trailer Portrait</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 607px; height: 1080px; overflow: hidden; background: #1a1a2e; font-family: 'Arial Black', Arial, sans-serif; }
+
+  .scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.6s; padding: 40px 30px; }
+  .scene.active { opacity: 1; }
+
+  .bg { position: absolute; inset: 0; background: linear-gradient(160deg, #1a1a2e, #16213e, #0f3460); }
+  .orb1 { position: absolute; width: 400px; height: 400px; border-radius: 50%; background: #7c3aed; opacity: 0.15; top: -100px; left: -100px; animation: pulse 3s ease-in-out infinite; }
+  .orb2 { position: absolute; width: 400px; height: 400px; border-radius: 50%; background: #e11d48; opacity: 0.12; bottom: -100px; right: -100px; animation: pulse 3s ease-in-out infinite 1.5s; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+  @keyframes titleIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+  @keyframes fadeUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes cardIn { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes msgIn { from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+  /* Scene 1 */
+  .title-main { font-size: 72px; font-weight: 900; color: white; text-align: center; text-shadow: 0 0 50px rgba(124,58,237,0.8); animation: titleIn 0.8s both; line-height: 1; }
+  .title-sub { font-size: 20px; color: rgba(255,255,255,0.45); letter-spacing: 8px; text-align: center; margin-top: 14px; animation: fadeUp 0.6s 0.4s both; }
+  .title-badge { margin-top: 30px; padding: 12px 32px; border-radius: 50px; background: rgba(124,58,237,0.3); border: 2px solid rgba(124,58,237,0.6); font-size: 16px; color: #a78bfa; font-weight: bold; animation: fadeUp 0.6s 0.7s both; }
+
+  /* Scene 2 - cards vertical */
+  .game-card { width: 100%; padding: 24px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); margin-bottom: 16px; display: flex; gap: 20px; align-items: center; animation: cardIn 0.5s both; opacity: 0; }
+  .game-card.sel { border-color: rgba(124,58,237,0.5); box-shadow: 0 0 30px rgba(124,58,237,0.3); }
+  .game-card:nth-child(2){animation-delay:0.1s} .game-card:nth-child(3){animation-delay:0.3s}
+  .card-label { font-size: 9px; font-weight: bold; letter-spacing: 3px; margin-bottom: 4px; }
+  .card-title { font-size: 18px; font-weight: 900; color: white; margin-bottom: 4px; }
+  .card-desc { font-size: 11px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+
+  /* Scene 3 - game */
+  .top-bar { width: 100%; background: rgba(22,33,62,0.9); padding: 10px 16px; border-radius: 12px 12px 0 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .canvas-box { width: 100%; background: white; border-radius: 0; flex: 1; position: relative; overflow: hidden; }
+  .draw-path { stroke-dasharray: 1500; stroke-dashoffset: 1500; animation: draw 3s ease forwards 0.5s; }
+  @keyframes draw { to{stroke-dashoffset:0} }
+  .timer-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); }
+  .timer-fill { height: 100%; background: #f59e0b; animation: shrink 6s linear forwards; }
+  @keyframes shrink { to{width:10%} }
+  .guess-input { width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 0 0 12px 12px; padding: 12px 16px; color: rgba(255,255,255,0.4); font-size: 14px; }
+
+  /* chat msg */
+  .cmsg { width: 100%; padding: 10px 14px; border-radius: 12px; font-size: 13px; margin-bottom: 8px; animation: msgIn 0.4s both; }
+  .cmsg:nth-child(1){animation-delay:2s} .cmsg:nth-child(2){animation-delay:3.5s} .cmsg:nth-child(3){animation-delay:5s}
+
+  /* Scene 4 */
+  .lb-row { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 14px; margin-bottom: 10px; animation: cardIn 0.5s both; }
+  .lb-row:nth-child(1){background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);animation-delay:0.1s}
+  .lb-row:nth-child(2){background:rgba(255,255,255,0.05);animation-delay:0.25s}
+  .lb-row:nth-child(3){background:rgba(255,255,255,0.05);animation-delay:0.4s}
+  .lb-av { width: 44px; height: 44px; border-radius: 50%; display:flex;align-items:center;justify-content:center;font-weight:bold;color:white;font-size:18px;flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<!-- Scene 1: Title -->
+<div class="scene active" id="s1">
+  <div class="bg"></div><div class="orb1"></div><div class="orb2"></div>
+  <div style="position:relative;z-index:1;text-align:center;display:flex;flex-direction:column;align-items:center">
+    <div style="font-size:100px;margin-bottom:16px">🎨</div>
+    <div class="title-main">POINT<br>CLUB</div>
+    <div class="title-sub">DRAW &amp; GUESS</div>
+    <div class="title-badge">✦ MULTIPLAYER GAME ✦</div>
+    <div style="margin-top:20px;font-size:13px;color:rgba(255,255,255,0.25);letter-spacing:3px">FREE • NO LOGIN NEEDED</div>
+  </div>
+</div>
+
+<!-- Scene 2: Choose mode -->
+<div class="scene" id="s2">
+  <div class="bg"></div><div class="orb1"></div><div class="orb2"></div>
+  <div style="position:relative;z-index:1;width:100%">
+    <div style="font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:5px;margin-bottom:24px;text-align:center">CHOOSE YOUR GAME</div>
+    <div class="game-card sel">
+      <svg width="56" height="64" viewBox="0 0 64 72" flex-shrink="0" style="flex-shrink:0">
+        <rect x="0" y="0" width="64" height="32" fill="#a78bfa" transform="skewX(-30) scaleY(0.864)" rx="3"/>
+        <rect x="0" y="27" width="32" height="40" fill="#7c3aed" transform="skewY(30)"/>
+        <rect x="32" y="27" width="32" height="40" fill="#4c1d95" transform="skewY(-30)"/>
+      </svg>
+      <div>
+        <div class="card-label" style="color:#a78bfa">SCRIBBLE.IO STYLE</div>
+        <div class="card-title">Draw &amp; Guess</div>
+        <div class="card-desc">One draws, others race to type the word!</div>
+      </div>
+    </div>
+    <div class="game-card">
+      <svg width="56" height="64" viewBox="0 0 64 72" style="flex-shrink:0">
+        <rect x="0" y="0" width="64" height="32" fill="#fb7185" transform="skewX(-30) scaleY(0.864)" rx="3"/>
+        <rect x="0" y="27" width="32" height="40" fill="#e11d48" transform="skewY(30)"/>
+        <rect x="32" y="27" width="32" height="40" fill="#9f1239" transform="skewY(-30)"/>
+      </svg>
+      <div>
+        <div class="card-label" style="color:#fb7185">VOTE FOR BEST</div>
+        <div class="card-title">Scribble Battle</div>
+        <div class="card-desc">Everyone draws, community votes!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scene 3: Game -->
+<div class="scene" id="s3">
+  <div class="bg"></div>
+  <div style="position:relative;z-index:1;width:100%;display:flex;flex-direction:column;height:900px">
+    <div class="top-bar">
+      <span style="font-size:11px;color:rgba(255,255,255,0.4)">Round 1/3</span>
+      <div style="display:flex;gap:5px">
+        <span style="font-size:16px;font-weight:900;color:white;border-bottom:2px solid rgba(255,255,255,0.3);padding-bottom:2px">_</span>
+        <span style="font-size:16px;font-weight:900;color:white;border-bottom:2px solid rgba(255,255,255,0.3);padding-bottom:2px">_</span>
+        <span style="font-size:16px;font-weight:900;color:white;border-bottom:2px solid rgba(255,255,255,0.3);padding-bottom:2px">_</span>
+        <span style="font-size:16px;font-weight:900;color:white;border-bottom:2px solid rgba(255,255,255,0.3);padding-bottom:2px">_</span>
+        <span style="font-size:16px;font-weight:900;color:white;border-bottom:2px solid rgba(255,255,255,0.3);padding-bottom:2px">_</span>
+      </div>
+      <span style="font-size:15px;font-weight:bold;color:#f59e0b">⏱ 42s</span>
+    </div>
+    <div class="timer-bar"><div class="timer-fill" style="width:70%"></div></div>
+    <div class="canvas-box" style="height:400px">
+      <svg width="100%" height="400" style="position:absolute;inset:0">
+        <circle cx="200" cy="180" r="70" fill="none" stroke="#f59e0b" stroke-width="8" class="draw-path"/>
+        <line x1="200" y1="90" x2="200" y2="68" stroke="#f59e0b" stroke-width="7" class="draw-path" style="animation-delay:1.2s"/>
+        <line x1="200" y1="270" x2="200" y2="292" stroke="#f59e0b" stroke-width="7" class="draw-path" style="animation-delay:1.4s"/>
+        <line x1="110" y1="180" x2="88" y2="180" stroke="#f59e0b" stroke-width="7" class="draw-path" style="animation-delay:1.6s"/>
+        <line x1="290" y1="180" x2="312" y2="180" stroke="#f59e0b" stroke-width="7" class="draw-path" style="animation-delay:1.8s"/>
+        <polygon points="380,230 460,150 540,230" fill="#e11d48" opacity="0">
+          <animate attributeName="opacity" from="0" to="0.9" begin="2.2s" dur="0.5s" fill="freeze"/>
+        </polygon>
+        <rect x="394" y="230" width="132" height="110" fill="#7c3aed" opacity="0">
+          <animate attributeName="opacity" from="0" to="0.9" begin="2.6s" dur="0.4s" fill="freeze"/>
+        </rect>
+        <rect x="444" y="278" width="44" height="62" fill="#1a1a2e" opacity="0">
+          <animate attributeName="opacity" from="0" to="1" begin="3s" dur="0.3s" fill="freeze"/>
+        </rect>
+      </svg>
+    </div>
+    <div style="padding:8px;background:rgba(22,33,62,0.9);border-top:1px solid rgba(255,255,255,0.1)">
+      <div class="cmsg" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7)"><strong>Player1:</strong> is it a sun? ☀️</div>
+      <div class="cmsg" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7)"><strong>Player3:</strong> a house?? 🏠</div>
+      <div class="cmsg" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;font-weight:bold"><strong>Player3:</strong> ✓ Guessed it! +200 pts 🎉</div>
+    </div>
+    <div class="guess-input">Type your guess and press Enter…</div>
+  </div>
+</div>
+
+<!-- Scene 4: Results -->
+<div class="scene" id="s4">
+  <div class="bg"></div><div class="orb1"></div><div class="orb2"></div>
+  <div style="position:relative;z-index:1;width:100%;text-align:center">
+    <div style="font-size:64px;margin-bottom:8px;animation:titleIn 0.6s both">🏆</div>
+    <div style="font-size:52px;font-weight:900;color:white;text-shadow:0 0 30px rgba(251,191,36,0.6);margin-bottom:6px;animation:titleIn 0.6s 0.1s both">Game Over!</div>
+    <div style="font-size:15px;color:rgba(255,255,255,0.35);letter-spacing:4px;margin-bottom:28px">FINAL RESULTS</div>
+    <div class="lb-row">
+      <div class="lb-av" style="background:#7c3aed">G</div>
+      <div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:bold;color:white">👑 Player1</div></div>
+      <div style="font-size:20px;font-weight:900;color:white">530 pts</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-av" style="background:#059669">A</div>
+      <div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:bold;color:white">Player3</div></div>
+      <div style="font-size:20px;font-weight:900;color:white">200 pts</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-av" style="background:#e11d48">P</div>
+      <div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:bold;color:white">Player2</div></div>
+      <div style="font-size:20px;font-weight:900;color:white">0 pts</div>
+    </div>
+  </div>
+</div>
+
+<!-- Scene 5: CTA -->
+<div class="scene" id="s5">
+  <div class="bg"></div><div class="orb1"></div><div class="orb2"></div>
+  <div style="position:relative;z-index:1;text-align:center;display:flex;flex-direction:column;align-items:center">
+    <div style="font-size:72px;font-weight:900;color:white;text-shadow:0 0 50px rgba(124,58,237,0.8);animation:titleIn 0.8s both;line-height:1.1">POINT<br>CLUB</div>
+    <div style="font-size:18px;color:rgba(255,255,255,0.4);letter-spacing:6px;margin-top:16px;animation:fadeUp 0.6s 0.3s both">DRAW &amp; GUESS</div>
+    <div style="margin-top:32px;padding:14px 36px;border-radius:50px;background:rgba(124,58,237,0.3);border:2px solid rgba(124,58,237,0.6);font-size:18px;color:#a78bfa;font-weight:bold;animation:fadeUp 0.6s 0.5s both">🌐 point-club.vercel.app</div>
+    <div style="margin-top:20px;font-size:13px;color:rgba(255,255,255,0.25);letter-spacing:3px;animation:fadeUp 0.6s 0.7s both">FREE • NO LOGIN • 2–8 PLAYERS</div>
+  </div>
+</div>
+
+<script>
+const scenes = ['s1','s2','s3','s4','s5'];
+const times  = [2500, 3000, 7000, 3500, 3000];
+let cur = 0;
+function next() {
+  document.getElementById(scenes[cur]).classList.remove('active');
+  cur = (cur + 1) % scenes.length;
+  document.getElementById(scenes[cur]).classList.add('active');
+  setTimeout(next, times[cur]);
+}
+setTimeout(next, times[0]);
+</script>
+</body>
+</html>

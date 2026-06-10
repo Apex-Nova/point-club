@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="50%" style="stop-color:#16213e"/>
+      <stop offset="100%" style="stop-color:#0f3460"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="14" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+
+  <!-- Glow orbs -->
+  <circle cx="200" cy="400" r="300" fill="#7c3aed" opacity="0.14"/>
+  <circle cx="900" cy="1500" r="350" fill="#e11d48" opacity="0.12"/>
+
+  <!-- Title top -->
+  <text x="540" y="180" text-anchor="middle" font-family="Arial Black" font-weight="900" font-size="96" fill="white" filter="url(#glow)">POINT CLUB</text>
+  <text x="540" y="248" text-anchor="middle" font-family="Arial" font-size="30" fill="rgba(255,255,255,0.4)" letter-spacing="8">DRAW &amp; GUESS</text>
+
+  <!-- Divider -->
+  <line x1="200" y1="278" x2="880" y2="278" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+
+  <!-- Canvas board -->
+  <rect x="80" y="310" width="920" height="780" rx="20" fill="white" opacity="0.97"/>
+
+  <!-- Drawing: Sun -->
+  <circle cx="320" cy="580" r="90" fill="none" stroke="#f59e0b" stroke-width="11" stroke-linecap="round"/>
+  <line x1="320" y1="460" x2="320" y2="432" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+  <line x1="320" y1="700" x2="320" y2="728" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+  <line x1="200" y1="580" x2="172" y2="580" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+  <line x1="440" y1="580" x2="468" y2="580" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+  <line x1="235" y1="495" x2="215" y2="475" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+  <line x1="405" y1="665" x2="425" y2="685" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+  <line x1="405" y1="495" x2="425" y2="475" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+  <line x1="235" y1="665" x2="215" y2="685" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Clouds -->
+  <ellipse cx="280" cy="386" rx="60" ry="38" fill="#e5e7eb" opacity="0.85"/>
+  <ellipse cx="328" cy="374" rx="48" ry="30" fill="#f3f4f6" opacity="0.9"/>
+  <ellipse cx="244" cy="390" rx="38" ry="26" fill="#e5e7eb" opacity="0.8"/>
+
+  <!-- House -->
+  <polygon points="630,700 770,560 910,700" fill="#e11d48" opacity="0.9"/>
+  <rect x="648" y="700" width="244" height="200" rx="4" fill="#7c3aed" opacity="0.9"/>
+  <rect x="738" y="768" width="64" height="132" rx="7" fill="#1a1a2e"/>
+  <rect x="664" y="722" width="46" height="46" rx="6" fill="#fbbf24"/>
+  <rect x="830" y="722" width="46" height="46" rx="6" fill="#fbbf24"/>
+
+  <!-- Ground -->
+  <line x1="100" y1="900" x2="980" y2="900" stroke="#9ca3af" stroke-width="4" opacity="0.3" stroke-linecap="round"/>
+
+  <!-- Pencil -->
+  <g transform="translate(860, 860) rotate(-30)">
+    <rect x="-10" y="-64" width="20" height="80" rx="4" fill="#fbbf24"/>
+    <polygon points="-10,16 10,16 0,36" fill="#1a1a2e"/>
+    <rect x="-10" y="-76" width="20" height="14" rx="3" fill="#f87171"/>
+  </g>
+
+  <!-- Word hint -->
+  <rect x="80" y="260" width="920" height="44" rx="10" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="180" y="288" font-family="Arial" font-size="13" fill="rgba(255,255,255,0.3)">Round 1/3</text>
+  <text x="390" y="290" font-family="Arial Black" font-size="17" fill="white" letter-spacing="12">_ _ _ _ _</text>
+  <text x="860" y="288" font-family="Arial" font-size="15" fill="#f59e0b" font-weight="bold">42s</text>
+
+  <!-- Players list -->
+  <text x="80" y="1160" font-family="Arial" font-size="14" font-weight="bold" fill="rgba(255,255,255,0.3)" letter-spacing="4">PLAYERS</text>
+
+  <rect x="80" y="1178" width="920" height="72" rx="16" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <circle cx="130" cy="1214" r="26" fill="#7c3aed"/>
+  <text x="130" y="1222" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="18" fill="white">G</text>
+  <text x="174" y="1208" font-family="Arial" font-weight="bold" font-size="16" fill="rgba(255,255,255,0.9)">Player1</text>
+  <text x="174" y="1230" font-family="Arial" font-size="13" fill="rgba(255,255,255,0.4)">350 pts</text>
+  <text x="940" y="1220" text-anchor="end" font-family="Arial" font-size="22" fill="#f59e0b">🥇</text>
+
+  <rect x="80" y="1262" width="920" height="72" rx="16" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <circle cx="130" cy="1298" r="26" fill="#e11d48"/>
+  <text x="130" y="1306" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="18" fill="white">P</text>
+  <text x="174" y="1292" font-family="Arial" font-weight="bold" font-size="16" fill="rgba(255,255,255,0.9)">Player2 ✏️</text>
+  <text x="174" y="1314" font-family="Arial" font-size="13" fill="rgba(255,255,255,0.4)">Drawing now...</text>
+
+  <rect x="80" y="1346" width="920" height="72" rx="16" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <circle cx="130" cy="1382" r="26" fill="#059669"/>
+  <text x="130" y="1390" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="18" fill="white">A</text>
+  <text x="174" y="1376" font-family="Arial" font-weight="bold" font-size="16" fill="rgba(255,255,255,0.9)">Player3</text>
+  <text x="174" y="1398" font-family="Arial" font-size="13" fill="#34d399">200 pts ✓</text>
+
+  <!-- Chat bubbles -->
+  <rect x="80" y="1448" width="920" height="70" rx="16" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="110" y="1474" font-family="Arial" font-size="14" fill="rgba(255,255,255,0.4)">Player1:</text>
+  <text x="110" y="1498" font-family="Arial" font-size="16" fill="rgba(255,255,255,0.8)">is it a house? 🏠</text>
+
+  <rect x="80" y="1530" width="920" height="70" rx="16" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.35)" stroke-width="1"/>
+  <text x="110" y="1556" font-family="Arial" font-size="14" fill="rgba(255,255,255,0.4)">Player3:</text>
+  <text x="110" y="1580" font-family="Arial" font-weight="bold" font-size="16" fill="#34d399">✓ Guessed it! +200 pts 🎉</text>
+
+  <!-- Bottom section -->
+  <rect x="290" y="1680" width="500" height="56" rx="28" fill="rgba(124,58,237,0.3)" stroke="rgba(124,58,237,0.6)" stroke-width="2"/>
+  <text x="540" y="1714" text-anchor="middle" font-family="Arial" font-size="20" fill="#a78bfa" font-weight="bold">✦ FREE TO PLAY ✦</text>
+
+  <text x="540" y="1800" text-anchor="middle" font-family="Arial" font-size="22" fill="rgba(255,255,255,0.25)">point-club.vercel.app</text>
+
+  <text x="540" y="1870" text-anchor="middle" font-family="Arial" font-size="18" fill="rgba(255,255,255,0.15)">2–8 Players  •  No Login Required  •  Instant Play</text>
+</svg>

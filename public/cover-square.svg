@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="50%" style="stop-color:#16213e"/>
+      <stop offset="100%" style="stop-color:#0f3460"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1080" fill="url(#bg)"/>
+
+  <circle cx="200" cy="250" r="280" fill="#7c3aed" opacity="0.13"/>
+  <circle cx="880" cy="830" r="300" fill="#e11d48" opacity="0.11"/>
+
+  <!-- Canvas -->
+  <rect x="100" y="100" width="880" height="660" rx="18" fill="white" opacity="0.97"/>
+
+  <!-- Sun -->
+  <circle cx="310" cy="360" r="80" fill="none" stroke="#f59e0b" stroke-width="10"/>
+  <line x1="310" y1="252" x2="310" y2="228" stroke="#f59e0b" stroke-width="9" stroke-linecap="round"/>
+  <line x1="310" y1="468" x2="310" y2="492" stroke="#f59e0b" stroke-width="9" stroke-linecap="round"/>
+  <line x1="202" y1="360" x2="178" y2="360" stroke="#f59e0b" stroke-width="9" stroke-linecap="round"/>
+  <line x1="418" y1="360" x2="442" y2="360" stroke="#f59e0b" stroke-width="9" stroke-linecap="round"/>
+  <line x1="234" y1="284" x2="217" y2="267" stroke="#f59e0b" stroke-width="9" stroke-linecap="round"/>
+  <line x1="386" y1="436" x2="403" y2="453" stroke="#f59e0b" stroke-width="9" stroke-linecap="round"/>
+  <line x1="386" y1="284" x2="403" y2="267" stroke="#f59e0b" stroke-width="9" stroke-linecap="round"/>
+  <line x1="234" y1="436" x2="217" y2="453" stroke="#f59e0b" stroke-width="9" stroke-linecap="round"/>
+
+  <!-- House -->
+  <polygon points="620,480 760,330 900,480" fill="#e11d48" opacity="0.9"/>
+  <rect x="636" y="480" width="248" height="190" rx="3" fill="#7c3aed" opacity="0.9"/>
+  <rect x="726" y="548" width="68" height="122" rx="7" fill="#1a1a2e"/>
+  <rect x="652" y="504" width="46" height="46" rx="6" fill="#fbbf24"/>
+  <rect x="822" y="504" width="46" height="46" rx="6" fill="#fbbf24"/>
+
+  <!-- Ground -->
+  <line x1="120" y1="672" x2="960" y2="672" stroke="#9ca3af" stroke-width="3" opacity="0.3"/>
+
+  <!-- Clouds -->
+  <ellipse cx="260" cy="172" rx="56" ry="35" fill="#e5e7eb" opacity="0.85"/>
+  <ellipse cx="304" cy="160" rx="44" ry="28" fill="#f3f4f6" opacity="0.9"/>
+  <ellipse cx="226" cy="176" rx="36" ry="24" fill="#e5e7eb" opacity="0.8"/>
+
+  <!-- Pencil -->
+  <g transform="translate(900, 640) rotate(-30)">
+    <rect x="-9" y="-58" width="18" height="72" rx="4" fill="#fbbf24"/>
+    <polygon points="-9,14 9,14 0,32" fill="#1a1a2e"/>
+    <rect x="-9" y="-70" width="18" height="14" rx="3" fill="#f87171"/>
+  </g>
+
+  <!-- Word hint -->
+  <rect x="100" y="56" width="880" height="40" rx="10" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="200" y="82" font-family="Arial" font-size="13" fill="rgba(255,255,255,0.3)">Round 1/3</text>
+  <text x="380" y="84" font-family="Arial Black" font-size="16" fill="white" letter-spacing="14">_ _ _ _ _</text>
+  <text x="860" y="82" text-anchor="end" font-family="Arial" font-size="14" fill="#f59e0b" font-weight="bold">⏱ 42s</text>
+
+  <!-- Timer bar -->
+  <rect x="100" y="96" width="880" height="4" rx="2" fill="rgba(255,255,255,0.1)"/>
+  <rect x="100" y="96" width="480" height="4" rx="2" fill="#f59e0b"/>
+
+  <!-- Title -->
+  <text x="540" y="870" text-anchor="middle" font-family="Arial Black" font-weight="900" font-size="104" fill="white" filter="url(#glow)">POINT CLUB</text>
+  <text x="540" y="938" text-anchor="middle" font-family="Arial" font-size="30" fill="rgba(255,255,255,0.4)" letter-spacing="8">DRAW  &amp;  GUESS</text>
+
+  <!-- Badge -->
+  <rect x="380" y="966" width="320" height="48" rx="24" fill="rgba(124,58,237,0.3)" stroke="rgba(124,58,237,0.6)" stroke-width="1.5"/>
+  <text x="540" y="996" text-anchor="middle" font-family="Arial" font-size="18" fill="#a78bfa" font-weight="bold">✦ FREE TO PLAY ✦</text>
+
+  <text x="540" y="1050" text-anchor="middle" font-family="Arial" font-size="16" fill="rgba(255,255,255,0.2)">point-club.vercel.app</text>
+</svg>
