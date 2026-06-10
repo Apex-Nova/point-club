@@ -83,14 +83,14 @@
     <circle cx="90" cy="310" r="36" fill="#e11d48"/>
     <text x="90" y="318" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="20" fill="white">S</text>
     <rect x="136" y="292" width="120" height="36" rx="8" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
-    <text x="148" y="306" font-family="Arial" font-weight="bold" font-size="11" fill="rgba(255,255,255,0.8)">Shaurya ✏️</text>
+    <text x="148" y="306" font-family="Arial" font-weight="bold" font-size="11" fill="rgba(255,255,255,0.8)">Player2 ✏️</text>
     <text x="148" y="321" font-family="Arial" font-size="10" fill="rgba(255,255,255,0.4)">0 pts</text>
   </g>
   <g>
     <circle cx="90" cy="380" r="36" fill="#059669"/>
     <text x="90" y="388" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="20" fill="white">A</text>
     <rect x="136" y="362" width="120" height="36" rx="8" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
-    <text x="148" y="376" font-family="Arial" font-weight="bold" font-size="11" fill="rgba(255,255,255,0.8)">Apex_Nova</text>
+    <text x="148" y="376" font-family="Arial" font-weight="bold" font-size="11" fill="rgba(255,255,255,0.8)">Player3</text>
     <text x="148" y="391" font-family="Arial" font-size="10" fill="rgba(255,255,255,0.4)">200 pts ✓</text>
   </g>
 
