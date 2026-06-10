@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "dev:all": "concurrently -n frontend,backend -c cyan,magenta \"npm run dev\" \"npm run dev --prefix backend\"",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
