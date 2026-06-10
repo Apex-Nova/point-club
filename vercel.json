@@ -22,10 +22,4 @@
       ]
     }
   ],
-  "env": {
-    "VITE_BACKEND_URL":       "@point-club-backend-url",
-    "VITE_SOCKET_URL":        "@point-club-backend-url",
-    "VITE_SUPABASE_URL":      "@point-club-supabase-url",
-    "VITE_SUPABASE_ANON_KEY": "@point-club-supabase-anon-key"
-  }
 }
