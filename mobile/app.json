@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Point Club",
+    "slug": "point-club",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f5f0e8"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "club.point.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Point Club uses your microphone for voice chat in drawing rooms.",
+        "NSCameraUsageDescription": "Point Club uses your camera for profile photos."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#7c5cbf"
+      },
+      "package": "club.point.app",
+      "versionCode": 1,
+      "permissions": ["RECORD_AUDIO", "CAMERA"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      ["expo-notifications", {
+        "icon": "./assets/notification-icon.png",
+        "color": "#7c5cbf"
+      }]
+    ],
+    "extra": {
+      "eas": { "projectId": "your-eas-project-id" }
+    },
+    "scheme": "pointclub"
+  }
+}

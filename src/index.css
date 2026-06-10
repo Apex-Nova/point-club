@@ -1,0 +1,133 @@
+@import '@fontsource/playfair-display/400.css';
+@import '@fontsource/playfair-display/600.css';
+@import '@fontsource/playfair-display/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+
+@import "tailwindcss";
+
+@theme {
+  /* ── Brand palette ─────────────────────────────────────── */
+  --color-lavender:       #8b78e0;
+  --color-lavender-light: #ede9fc;
+  --color-lavender-dark:  #6b57c8;
+  --color-cream:          #faf7f3;
+  --color-cream-dark:     #ece5d8;
+  --color-coral:          #f27059;
+  --color-coral-light:    #f7967e;
+  --color-coral-dark:     #e05540;
+  --color-mint:           #7dd3b2;
+  --color-sky:            #87c5e8;
+  --color-peach:          #f9c784;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-cream);
+  color: #1a1a2e;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.65;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Elevation shadows ─────────────────────────────────── */
+.shadow-xs        { box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04); }
+.shadow-card      { box-shadow: 0 4px 20px rgb(0 0 0 / 0.09), 0 1px 6px rgb(0 0 0 / 0.05); }
+.shadow-card-hover{ box-shadow: 0 12px 40px rgb(0 0 0 / 0.13), 0 4px 12px rgb(0 0 0 / 0.07); }
+.shadow-float     { box-shadow: 0 20px 56px rgb(0 0 0 / 0.16), 0 8px 20px rgb(0 0 0 / 0.09); }
+.shadow-deep      { box-shadow: 0 32px 80px rgb(0 0 0 / 0.20), 0 12px 28px rgb(0 0 0 / 0.12); }
+.shadow-glow-lavender { box-shadow: 0 8px 32px rgb(139 120 224 / 0.30), 0 2px 8px rgb(139 120 224 / 0.15); }
+
+/* ── Gradient text ──────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #6b57c8 0%, #f27059 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-cream-dark); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #c8bab0; }
+
+/* ── Focus ring ─────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-lavender);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Selection ──────────────────────────────────────────── */
+::selection {
+  background: rgb(139 120 224 / 0.18);
+  color: #1a1a2e;
+}
+
+/* ── Input base ─────────────────────────────────────────── */
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1.125rem;
+  border-radius: 0.875rem;
+  border: 1.5px solid var(--color-cream-dark);
+  background: white;
+  font-size: 0.875rem;
+  color: #1a1a2e;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  font-family: var(--font-body);
+}
+.input-field:focus {
+  border-color: var(--color-lavender);
+  box-shadow: 0 0 0 3px rgb(139 120 224 / 0.10);
+}
+.input-field::placeholder { color: #a0a0b8; }
+
+/* ── Section divider bar ────────────────────────────────── */
+.divider-accent {
+  width: 2.5rem;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--color-lavender) 0%, var(--color-coral) 100%);
+  margin: 0.875rem auto 0;
+}
+
+/* ── Glass morphism ─────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* ── Noise texture overlay (subtle) ────────────────────── */
+.surface-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.4;
+}
