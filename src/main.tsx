@@ -15,8 +15,9 @@ initAnalytics();
 initLocale();
 initCrazyGames(); // CrazyGames SDK — required for ads
 
-// Register service worker for offline mode (Phase 8)
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// Register service worker only when not in an iframe (CrazyGames blocks it)
+const inIframe = window.self !== window.top;
+if ('serviceWorker' in navigator && import.meta.env.PROD && !inIframe) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 

@@ -5,9 +5,14 @@ import { useAuth } from './AuthContext';
 
 function getGuestId(): string {
   const key = 'pc_guest_id';
-  let id = sessionStorage.getItem(key);
-  if (!id) { id = `guest_${Math.random().toString(36).slice(2, 10)}`; sessionStorage.setItem(key, id); }
-  return id;
+  try {
+    let id = sessionStorage.getItem(key);
+    if (!id) { id = `guest_${Math.random().toString(36).slice(2, 10)}`; sessionStorage.setItem(key, id); }
+    return id;
+  } catch {
+    // sessionStorage blocked in iframe (e.g. CrazyGames) — generate ephemeral ID
+    return `guest_${Math.random().toString(36).slice(2, 10)}`;
+  }
 }
 
 interface SocketContextValue {

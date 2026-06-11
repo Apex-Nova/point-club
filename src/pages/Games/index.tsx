@@ -113,7 +113,7 @@ export default function GamesPage() {
   const [rounds,    setRoundsLocal]    = useState(3);
   const [drawTime,  setDrawTime]  = useState(80);
 
-  const myUserId = user?.id ?? (sessionStorage.getItem('pc_guest_id') ?? '');
+  const myUserId = user?.id ?? (() => { try { return sessionStorage.getItem('pc_guest_id') ?? ''; } catch { return ''; } })();
   const inGame   = !!state.gameId;
   const inPlay   = inGame && state.phase !== 'lobby';
 
