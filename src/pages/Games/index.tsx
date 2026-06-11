@@ -3,7 +3,7 @@ import { gameplayStart, gameplayStop, showMidgameAd } from '@/lib/crazygames';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Globe, Lock, Hash } from 'lucide-react';
-import { useSocket } from '@/contexts/SocketContext';
+import { useSocket, useSocketConnected } from '@/contexts/SocketContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGameRoom } from '@/hooks/useGameRoom';
 import type { GameType } from '@/lib/services/games.service';
@@ -86,8 +86,9 @@ const GAMES = [
 
 // ── Main page ────────────────────────────────────────────────────
 export default function GamesPage() {
-  const socket   = useSocket();
-  const { user } = useAuth();
+  const socket    = useSocket();
+  const connected = useSocketConnected();
+  const { user }  = useAuth();
   const {
     state, createGame, joinGame, startGame,
     selectWord, sendLiveStroke, sendStroke, clearCanvas,
@@ -128,6 +129,20 @@ export default function GamesPage() {
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     leaveGame();
   };
+
+  // ── Connecting screen (Render waking up) ──────────────────────
+  if (!connected && !inGame) {
+    return (
+      <div className="min-h-screen bg-[#0f0f1a] flex flex-col items-center justify-center gap-6">
+        <motion.div className="w-14 h-14 rounded-full border-4 border-violet-500 border-t-transparent"
+          animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }} />
+        <div className="text-center">
+          <p className="text-white font-bold text-lg">Connecting to server…</p>
+          <p className="text-white/40 text-sm mt-1">This may take up to 30 seconds on first load</p>
+        </div>
+      </div>
+    );
+  }
 
   // ── Active game (full-screen) ──────────────────────────────────
   if (inPlay) {

@@ -3,7 +3,6 @@ import type { Socket } from 'socket.io-client';
 import { createRoomSocket } from '@/lib/socket';
 import { useAuth } from './AuthContext';
 
-// Stable guest ID across page refreshes
 function getGuestId(): string {
   const key = 'pc_guest_id';
   let id = sessionStorage.getItem(key);
@@ -12,14 +11,16 @@ function getGuestId(): string {
 }
 
 interface SocketContextValue {
-  socket: Socket | null;
+  socket:    Socket | null;
+  connected: boolean;
 }
 
-const SocketContext = createContext<SocketContextValue>({ socket: null });
+const SocketContext = createContext<SocketContextValue>({ socket: null, connected: false });
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socket,    setSocket]    = useState<Socket | null>(null);
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     const userId   = user?.id ?? getGuestId();
@@ -29,21 +30,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     const sock = createRoomSocket();
 
-    sock.on('connect', () => {
-      sock.emit('user:auth', { userId, username });
-    });
+    sock.on('connect',       () => { sock.emit('user:auth', { userId, username }); setConnected(true); });
+    sock.on('disconnect',    () => setConnected(false));
+    sock.on('connect_error', () => setConnected(false));
 
     sock.connect();
     setSocket(sock);
 
-    return () => {
-      sock.disconnect();
-      setSocket(null);
-    };
-  }, [user?.id]); // reconnect with new identity when auth changes
+    return () => { sock.disconnect(); setSocket(null); setConnected(false); };
+  }, [user?.id]);
 
   return (
-    <SocketContext.Provider value={{ socket }}>
+    <SocketContext.Provider value={{ socket, connected }}>
       {children}
     </SocketContext.Provider>
   );
@@ -51,4 +49,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
 export function useSocket(): Socket | null {
   return useContext(SocketContext).socket;
+}
+
+export function useSocketConnected(): boolean {
+  return useContext(SocketContext).connected;
 }
