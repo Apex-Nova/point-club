@@ -97,6 +97,16 @@ export default function GamesPage() {
 
   const rootRef = useRef<HTMLDivElement>(null);
 
+  // Auto-join if invited via URL ?code=XXXXXX
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (code && connected && !inGame) {
+      joinGame(undefined, code.toUpperCase());
+      window.history.replaceState({}, '', '/games'); // clean URL
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected]);
+
   const [selected,  setSelected]  = useState<GameType>('guess');
   const [joinCode,  setJoinCode]  = useState('');
   const [isPublic,  setIsPublic]  = useState(true);

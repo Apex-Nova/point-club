@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Copy, Check, ArrowLeft, Crown, Users, Minus, Plus } from 'lucide-react';
+import { Copy, Check, ArrowLeft, Crown, Users, Minus, Plus, Share2 } from 'lucide-react';
+import { getRoomInviteUrl } from '@/lib/crazygames';
 import type { GameRoomState } from '@/hooks/useGameRoom';
 
 interface Props {
@@ -17,7 +18,8 @@ const MODE_LABEL: Record<string, string> = {
 };
 
 export default function WaitingRoom({ gameState, myUserId, playerColors, onStartGame, onLeave, onSetRounds }: Props) {
-  const [copied, setCopied] = useState(false);
+  const [copied,      setCopied]      = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
   const isHost = gameState.hostId === myUserId;
 
   const copyCode = () => {
@@ -64,6 +66,19 @@ export default function WaitingRoom({ gameState, myUserId, playerColors, onStart
               </span>
             </button>
             <p className="text-[11px] text-white/30 mt-2">Share this code with friends</p>
+
+            {/* Invite link button — required by CrazyGames */}
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+              onClick={async () => {
+                const url = await getRoomInviteUrl(gameState.roomCode ?? '');
+                navigator.clipboard.writeText(url);
+                setInviteCopied(true);
+                setTimeout(() => setInviteCopied(false), 2000);
+              }}
+              className="mt-3 flex items-center gap-2 mx-auto px-5 py-2 rounded-xl bg-violet-600/20 border border-violet-500/30 hover:bg-violet-600/30 transition-colors text-violet-300 text-xs font-semibold">
+              {inviteCopied ? <Check size={13} className="text-emerald-400" /> : <Share2 size={13} />}
+              {inviteCopied ? 'Invite link copied!' : 'Copy Invite Link'}
+            </motion.button>
           </div>
 
           {/* Rounds setting */}
