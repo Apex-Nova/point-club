@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { gameplayStart, gameplayStop, showMidgameAd } from '@/lib/crazygames';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Globe, Lock, Hash } from 'lucide-react';
@@ -105,14 +106,23 @@ export default function GamesPage() {
   const inGame   = !!state.gameId;
   const inPlay   = inGame && state.phase !== 'lobby';
 
-  // Go fullscreen when game starts, exit when done
+  // Fullscreen + CrazyGames gameplay events
   useEffect(() => {
     if (inPlay) {
       rootRef.current?.requestFullscreen?.().catch(() => {});
-    } else if (document.fullscreenElement) {
-      document.exitFullscreen?.().catch(() => {});
+      gameplayStart();
+    } else {
+      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+      gameplayStop();
     }
   }, [inPlay]);
+
+  // Show mid-game ad between rounds (on results screen)
+  useEffect(() => {
+    if (state.phase === 'results') {
+      showMidgameAd(); // show ad during the 5s results pause
+    }
+  }, [state.round, state.phase]);
 
   const handleLeave = () => {
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});

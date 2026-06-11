@@ -7,11 +7,13 @@ import { SocketProvider } from './contexts/SocketContext.tsx';
 import { initAnalytics } from './lib/analytics.ts';
 import { initMonitoring } from './lib/monitoring.ts';
 import { initLocale } from './lib/i18n.ts';
+import { initCrazyGames } from './lib/crazygames.ts';
 
 // Initialise observability + i18n before render
 initMonitoring();
 initAnalytics();
 initLocale();
+initCrazyGames(); // CrazyGames SDK — required for ads
 
 // Register service worker for offline mode (Phase 8)
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
