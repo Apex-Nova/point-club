@@ -13,7 +13,10 @@ import { initCrazyGames } from './lib/crazygames.ts';
 initMonitoring();
 initAnalytics();
 initLocale();
-initCrazyGames(); // CrazyGames SDK — required for ads
+initCrazyGames().then(() => {
+  // Signal that the game has loaded and is ready to play
+  import('./lib/crazygames').then(({ gameplayStart }) => gameplayStart());
+});
 
 // Register service worker only when not in an iframe (CrazyGames blocks it)
 const inIframe = window.self !== window.top;
