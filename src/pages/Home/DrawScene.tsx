@@ -348,10 +348,111 @@ function ConfettiPiece({ x, y0, z, speed, rot, color, w }: {
   );
 }
 
+/* ─── Vivid Holi powder palette ───────────────────────────── */
+const POWDER = [
+  '#f72585', '#ff006e', '#b5179e', '#7209b7', '#560bad',
+  '#3a0ca3', '#3f37c9', '#4361ee', '#4cc9f0', '#06d6a0',
+  '#ffd60a', '#ffbe0b', '#fb5607', '#ff5400',
+];
+
+/* ─── 3D Holi powder burst (continuous colored particle clouds) ── */
+function PowderBurst({ trigger }: { trigger: number }) {
+  const COUNT = 900;
+  const pointsRef = useRef<THREE.Points>(null);
+
+  // per-particle state
+  const state = useMemo(() => {
+    const positions = new Float32Array(COUNT * 3);
+    const colors    = new Float32Array(COUNT * 3);
+    const vel       = new Float32Array(COUNT * 3);
+    const life      = new Float32Array(COUNT);
+    const maxLife   = new Float32Array(COUNT);
+    const c = new THREE.Color();
+
+    const seed = (i: number) => {
+      // emit from random burst origin around the scene
+      const ox = (Math.random() - 0.5) * 7;
+      const oy = (Math.random() - 0.4) * 5 + 0.5;
+      const oz = (Math.random() - 0.5) * 3 - 0.5;
+      positions[i*3]   = ox;
+      positions[i*3+1] = oy;
+      positions[i*3+2] = oz;
+      // explode outward
+      const ang = Math.random() * Math.PI * 2;
+      const sp  = 0.4 + Math.random() * 1.6;
+      const up  = Math.random() * 1.2;
+      vel[i*3]   = Math.cos(ang) * sp;
+      vel[i*3+1] = up + Math.random() * 0.6;
+      vel[i*3+2] = Math.sin(ang) * sp;
+      c.set(POWDER[Math.floor(Math.random() * POWDER.length)]);
+      colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+      maxLife[i] = 1.6 + Math.random() * 2.2;
+      life[i]    = Math.random() * maxLife[i];
+    };
+    for (let i = 0; i < COUNT; i++) seed(i);
+    return { positions, colors, vel, life, maxLife, seed };
+  }, []);
+
+  // re-seed a fresh burst when poked
+  const lastTrigger = useRef(trigger);
+
+  useFrame((_, dt) => {
+    const d = Math.min(dt, 0.05);
+    const { positions, vel, life, maxLife, seed, colors } = state;
+
+    if (trigger !== lastTrigger.current) {
+      lastTrigger.current = trigger;
+      for (let i = 0; i < COUNT; i++) { life[i] = 0; seed(i); }
+    }
+
+    for (let i = 0; i < COUNT; i++) {
+      life[i] += d;
+      if (life[i] > maxLife[i]) { life[i] = 0; seed(i); }
+      // integrate
+      positions[i*3]   += vel[i*3]   * d;
+      positions[i*3+1] += vel[i*3+1] * d;
+      positions[i*3+2] += vel[i*3+2] * d;
+      // gravity + drag
+      vel[i*3+1] -= 0.9 * d;
+      vel[i*3]   *= 0.985;
+      vel[i*3+2] *= 0.985;
+    }
+
+    if (pointsRef.current) {
+      const geo = pointsRef.current.geometry;
+      (geo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+      (geo.attributes.color as THREE.BufferAttribute).needsUpdate = true;
+      // fade whole cloud via opacity pulse
+      const mat = pointsRef.current.material as THREE.PointsMaterial;
+      mat.opacity = 0.85;
+    }
+    void colors;
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" array={state.positions} count={COUNT} itemSize={3} />
+        <bufferAttribute attach="attributes-color"    array={state.colors}    count={COUNT} itemSize={3} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.13}
+        vertexColors
+        transparent
+        opacity={0.85}
+        sizeAttenuation
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
+  );
+}
+
 /* ─── Scene wrapper ───────────────────────────────────────── */
 function SceneContent() {
   const pointer = useRef({ x: 0, y: 0 });
   const [waving, setWaving] = useState(false);
+  const [burst, setBurst]   = useState(0);
   const [strokes, setStrokes] = useState<{ x:number; y:number; c:string; r:number }[]>([]);
   const tick = useRef(0);
 
@@ -384,6 +485,7 @@ function SceneContent() {
   const poke = () => {
     setWaving(true);
     setStrokes([]);
+    setBurst(b => b + 1);          // fresh Holi powder explosion
     setTimeout(() => setWaving(false), 1600);
   };
 
@@ -404,6 +506,7 @@ function SceneContent() {
       <directionalLight position={[-5, 2, -3]} intensity={0.35} color={TEAL2} />
       <pointLight position={[0, 1, 3]} intensity={0.6} color={CORAL} distance={11} />
 
+      <PowderBurst trigger={burst} />
       <Robot pointer={pointer} waving={waving} onPoke={poke} />
       <Easel strokes={strokes} />
       {blobs.map((b, i) => <Blob key={i} {...b} />)}
