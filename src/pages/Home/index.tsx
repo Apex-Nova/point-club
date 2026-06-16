@@ -418,7 +418,7 @@ function Features() {
             viewport={{ once:true }} transition={{ delay: i*0.08, duration:0.45 }}
             style={{
               background:'#fff', borderRadius:16, padding:'22px 20px',
-              borderLeft:`4px solid ${r.accent}`,
+              borderLeftWidth:4, borderLeftStyle:'solid', borderLeftColor: r.accent,
               boxShadow:'0 2px 10px rgba(0,0,0,0.05)',
             }}
           >
