@@ -83,14 +83,6 @@ export default function DrawPage() {
     return () => clearTimeout(autoSaveTimer.current!);
   }, [strokes, activeBoardId, saveToBoard]);
 
-  // ── Sync canvas on undo/redo ──────────────────────────────────────────────
-  const prevStrokesRef = useRef(strokes);
-  useEffect(() => {
-    if (prevStrokesRef.current !== strokes) {
-      canvasRef.current?.redrawAll(strokes);
-      prevStrokesRef.current = strokes;
-    }
-  }, [strokes]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleStrokeComplete = useCallback((stroke: Stroke) => {
@@ -111,6 +103,7 @@ export default function DrawPage() {
 
   const handleClear = useCallback(() => {
     if (strokes.length === 0) return;
+    strokesRef.current = [];
     canvasRef.current?.clearDrawing();
     reset([]);
     addToast('Canvas cleared', 'info');

@@ -1,13 +1,13 @@
 import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Timer, Trash2, Eraser, Pencil, Crown } from 'lucide-react';
+import { Send, Timer, Trash2, Eraser, Pencil, Crown, ChevronUp, X } from 'lucide-react';
 import type { GameRoomState } from '@/hooks/useGameRoom';
 import Canvas from '@/drawing/components/Canvas';
 import type { CanvasHandle } from '@/drawing/types';
 import type { Stroke, Point, ToolSettings } from '@/drawing/types';
 
 const COLORS = [
-  '#ffffff','#c0c0c0','#888888','#000000',
+  '#000000','#ffffff','#888888','#c0c0c0',
   '#ff0000','#ff6b00','#ffeb00','#00c800',
   '#00c8c8','#0000ff','#8000ff','#ff00ff',
   '#ff8080','#ffc080','#ffff80','#80ff80',
@@ -47,10 +47,10 @@ function WordHint({ secretWord, wordLength, timeLeft, roundTimeS }: {
   return (
     <div className="flex items-center justify-center gap-1 flex-wrap">
       {chars.map((ch, i) =>
-        ch === ' ' ? <span key={i} className="w-4" /> : (
-          <span key={i} className={`inline-flex items-end justify-center font-black text-base border-b-2 min-w-[14px] pb-0.5 ${
-            ch === '_' ? 'border-white/30 text-transparent w-4' :
-            ch === '?' ? 'border-violet-400 text-violet-300 w-4' :
+        ch === ' ' ? <span key={i} className="w-3" /> : (
+          <span key={i} className={`inline-flex items-end justify-center font-black text-sm border-b-2 min-w-[13px] pb-0.5 ${
+            ch === '_' ? 'border-white/30 text-transparent w-3.5' :
+            ch === '?' ? 'border-violet-400 text-violet-300 w-3.5' :
             'border-white text-white w-auto px-0.5'
           }`}>{ch}</span>
         )
@@ -60,9 +60,7 @@ function WordHint({ secretWord, wordLength, timeLeft, roundTimeS }: {
 }
 
 // ── Coordinate normalisation ─────────────────────────────────────
-// Strokes are sent as normalised 0‒1 fractions of the drawer's canvas.
-// Each receiver scales them to their own canvas size.
-const NORM = 1000; // virtual canvas units
+const NORM = 1000;
 
 function normaliseStroke(stroke: Stroke, el: HTMLElement): Stroke {
   const { width: w, height: h } = el.getBoundingClientRect();
@@ -82,7 +80,7 @@ function denormaliseStroke(stroke: Stroke, el: HTMLElement): Stroke {
   };
 }
 
-// ── Guesser canvas — renders remote strokes properly ─────────────
+// ── Guesser canvas ───────────────────────────────────────────────
 function GuesserCanvas({ remoteStrokes, liveStroke, clearTick }: {
   remoteStrokes: Stroke[]; liveStroke: Stroke | null; clearTick: number;
 }) {
@@ -93,7 +91,6 @@ function GuesserCanvas({ remoteStrokes, liveStroke, clearTick }: {
   const deNorm = (s: Stroke) =>
     containerRef.current ? denormaliseStroke(s, containerRef.current) : s;
 
-  // Render newly arrived completed strokes
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -103,7 +100,6 @@ function GuesserCanvas({ remoteStrokes, liveStroke, clearTick }: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remoteStrokes]);
 
-  // Re-render live stroke (clear + redraw all + live)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !liveStroke) return;
@@ -111,7 +107,6 @@ function GuesserCanvas({ remoteStrokes, liveStroke, clearTick }: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveStroke]);
 
-  // Clear
   useEffect(() => {
     canvasRef.current?.clearDrawing();
     renderedCountRef.current = 0;
@@ -137,7 +132,7 @@ export default function GuessGame({
   playerColors = [],
 }: Props) {
   const drawerCanvasRef     = useRef<CanvasHandle>(null);
-  const drawerContainerRef  = useRef<HTMLDivElement>(null); // for coordinate normalisation
+  const drawerContainerRef  = useRef<HTMLDivElement>(null);
   const chatRef             = useRef<HTMLDivElement>(null);
   const inputRef            = useRef<HTMLInputElement>(null);
   const liveStrokeRef       = useRef<Stroke | null>(null);
@@ -150,10 +145,12 @@ export default function GuessGame({
   const [settings,     setSettings]     = useState<ToolSettings>({ tool: 'pencil', color: '#000000', width: 6 });
   const [eraserOn,     setEraserOn]     = useState(false);
   const [guess,        setGuess]        = useState('');
+  const [chatOpen,     setChatOpen]     = useState(false);
 
   const isDrawer   = gameState.drawerId === myUserId;
   const hasGuessed = gameState.correctGuessers.includes(myUserId);
   const urgent     = gameState.timeLeft <= 15 && gameState.phase === 'drawing';
+  const unreadCount = gameState.chatMessages.length;
 
   // Auto-scroll chat
   useEffect(() => {
@@ -173,7 +170,7 @@ export default function GuessGame({
     }
   }, [gameState.phase, isDrawer, hasGuessed]);
 
-  // Send live (normalised) stroke to others every 50ms while drawing
+  // Send live stroke every 50ms while drawing
   useEffect(() => {
     if (!isDrawer) return;
     sendTimerRef.current = setInterval(() => {
@@ -184,7 +181,6 @@ export default function GuessGame({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDrawer, onSendLiveStroke]);
 
-  // Track live stroke points as they're added
   const handlePointAdded = useCallback((_strokeId: string, point: Point) => {
     if (liveStrokeRef.current) liveStrokeRef.current.points.push(point);
   }, []);
@@ -196,7 +192,7 @@ export default function GuessGame({
   const handleStrokeComplete = useCallback((s: Stroke) => {
     setLocalStrokes(prev => [...prev, s]);
     liveStrokeRef.current = null;
-    onSendStroke?.(norm(s)); // send normalised coords
+    onSendStroke?.(norm(s));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onSendStroke]);
 
@@ -230,21 +226,21 @@ export default function GuessGame({
   // ── Word choice ────────────────────────────────────────────────
   if (gameState.phase === 'choosing') {
     return (
-      <div className="h-full bg-[#1a1a2e] flex items-center justify-center">
+      <div className="h-full bg-[#1a1a2e] flex items-center justify-center p-4">
         {isDrawer && gameState.wordChoices.length > 0 ? (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-            <p className="text-white/50 text-sm mb-2 uppercase tracking-widest font-semibold">Choose your word</p>
-            <p className="text-white font-black text-3xl mb-8" style={{ fontFamily: 'var(--font-display)' }}>
+            <p className="text-white/50 text-xs mb-2 uppercase tracking-widest font-semibold">Choose your word</p>
+            <p className="text-white font-black text-2xl sm:text-3xl mb-8" style={{ fontFamily: 'var(--font-display)' }}>
               What will you draw?
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               {gameState.wordChoices.map((word, i) => (
                 <motion.button key={word}
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
                   whileHover={{ scale: 1.05, y: -4 }} whileTap={{ scale: 0.97 }}
                   onClick={() => onSelectWord?.(word)}
-                  className="px-10 py-5 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 text-white font-black text-xl shadow-xl capitalize">
+                  className="px-8 py-4 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 text-white font-black text-lg shadow-xl capitalize">
                   {word}
                 </motion.button>
               ))}
@@ -288,68 +284,73 @@ export default function GuessGame({
     const pct = Math.round((gameState.timeLeft / gameState.roundTimeS) * 100);
 
     return (
-      <div className="h-full flex min-h-0 bg-[#1a1a2e]">
+      <div className="h-full flex flex-col bg-[#1a1a2e] overflow-hidden">
 
-        {/* Left: Players */}
-        <div className="w-44 flex flex-col border-r border-white/10 shrink-0">
-          <div className="p-3 border-b border-white/10">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Players</p>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+        {/* ── Top bar (always visible) ── */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-[#16213e] border-b border-white/10 shrink-0">
+          {/* Players mini-strip */}
+          <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
             {gameState.players.map((p, i) => {
               const isMe      = p.userId === myUserId;
               const isDrawing = p.userId === gameState.drawerId;
               const guessed   = gameState.correctGuessers.includes(p.userId);
               const color     = playerColors[i % playerColors.length] ?? '#7c3aed';
               return (
-                <div key={p.userId} className={`flex items-center gap-2 px-2.5 py-2 rounded-xl ${isMe ? 'bg-white/10' : 'bg-white/5'}`}>
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0 relative"
+                <div key={p.userId}
+                  title={`${p.username} — ${p.score} pts`}
+                  className="relative shrink-0">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black text-white border-2 transition-all ${
+                    isMe ? 'border-violet-400' : isDrawing ? 'border-amber-400' : 'border-transparent'
+                  } ${guessed ? 'opacity-60' : ''}`}
                     style={{ background: color }}>
                     {p.username[0]?.toUpperCase()}
-                    {isDrawing && <span className="absolute -top-1 -right-1 text-[10px]">✏️</span>}
+                    {isDrawing && <span className="absolute -top-0.5 -right-0.5 text-[9px] leading-none">✏️</span>}
+                    {guessed && !isDrawing && (
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <span className="text-[7px] text-white font-black">✓</span>
+                      </span>
+                    )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className={`text-[11px] font-bold truncate ${isMe ? 'text-violet-300' : 'text-white/80'}`}>{p.username}</p>
-                    <p className="text-[10px] font-bold text-white/40 tabular-nums">{p.score} pts</p>
-                  </div>
-                  {guessed && !isDrawing && <span className="text-emerald-400 text-xs shrink-0">✓</span>}
                 </div>
               );
             })}
           </div>
-        </div>
 
-        {/* Center: Canvas */}
-        <div className="flex flex-col flex-1 min-w-0 min-h-0">
-          {/* Top bar */}
-          <div className="flex items-center justify-between px-4 py-2.5 bg-[#16213e] border-b border-white/10 shrink-0">
-            <span className="text-xs font-semibold text-white/40 tabular-nums">
-              Round {gameState.round}/{gameState.maxRounds}
+          {/* Word hint — center */}
+          <div className="flex-shrink-0 flex justify-center px-2">
+            <WordHint
+              secretWord={isDrawer ? gameState.secretWord : null}
+              wordLength={gameState.wordLength}
+              timeLeft={gameState.timeLeft}
+              roundTimeS={gameState.roundTimeS}
+            />
+          </div>
+
+          {/* Timer + round */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] text-white/30 font-semibold tabular-nums hidden sm:inline">
+              {gameState.round}/{gameState.maxRounds}
             </span>
-            <div className="flex-1 flex justify-center px-4">
-              <WordHint
-                secretWord={isDrawer ? gameState.secretWord : null}
-                wordLength={gameState.wordLength}
-                timeLeft={gameState.timeLeft}
-                roundTimeS={gameState.roundTimeS}
-              />
-            </div>
-            <div className={`flex items-center gap-1.5 shrink-0 font-bold tabular-nums text-sm ${urgent ? 'text-rose-400' : 'text-white/70'}`}>
-              <Timer size={13} className={urgent ? 'animate-pulse' : ''} />
+            <div className={`flex items-center gap-1 font-black tabular-nums text-sm ${urgent ? 'text-rose-400' : 'text-white/80'}`}>
+              <Timer size={12} className={urgent ? 'animate-pulse' : ''} />
               {gameState.timeLeft}s
             </div>
           </div>
+        </div>
 
-          {/* Timer bar */}
-          <div className="h-1 bg-white/10 shrink-0">
-            <motion.div animate={{ width: `${pct}%` }} transition={{ duration: 0.5 }}
-              className={`h-full ${pct > 60 ? 'bg-emerald-500' : pct > 25 ? 'bg-amber-400' : 'bg-rose-500'}`} />
-          </div>
+        {/* Timer bar */}
+        <div className="h-1 bg-white/10 shrink-0">
+          <motion.div animate={{ width: `${pct}%` }} transition={{ duration: 0.5 }}
+            className={`h-full transition-colors ${pct > 60 ? 'bg-emerald-500' : pct > 25 ? 'bg-amber-400' : 'bg-rose-500'}`} />
+        </div>
 
-          {/* Canvas */}
-          <div className="relative flex-1 min-h-0 bg-white">
-            {isDrawer ? (
-              <div ref={drawerContainerRef} className="w-full h-full">
+        {/* ── Canvas + desktop chat ── */}
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+
+        {/* Canvas area */}
+        <div className="relative flex-1 min-h-0 bg-white">
+          {isDrawer ? (
+            <div ref={drawerContainerRef} className="w-full h-full" style={{ touchAction: 'none' }}>
               <Canvas
                 ref={drawerCanvasRef}
                 toolSettings={displaySettings}
@@ -358,88 +359,43 @@ export default function GuessGame({
                 onPointAdded={handlePointAdded}
                 onStrokeComplete={handleStrokeComplete}
               />
-              </div>
-            ) : (
-              <GuesserCanvas
-                remoteStrokes={gameState.remoteStrokes}
-                liveStroke={gameState.liveStroke}
-                clearTick={gameState.clearTick}
-              />
-            )}
-            <AnimatePresence>
-              {hasGuessed && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg pointer-events-none">
-                  ✓ You guessed it!
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Drawer toolbar */}
-          {isDrawer ? (
-            <div className="bg-[#16213e] border-t border-white/10 px-3 py-2.5 space-y-2 shrink-0">
-              <div className="flex flex-wrap gap-1">
-                {COLORS.map(c => (
-                  <button key={c} onClick={() => pickColor(c)}
-                    className={`w-5 h-5 rounded-sm border transition-transform hover:scale-125 ${
-                      settings.color === c && !eraserOn
-                        ? 'border-white scale-125 ring-2 ring-white ring-offset-1 ring-offset-[#16213e]'
-                        : 'border-white/20'
-                    }`}
-                    style={{ background: c }} />
-                ))}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  {BRUSH_SIZES.map(sz => (
-                    <button key={sz} onClick={() => { setSettings(s => ({ ...s, width: sz })); setEraserOn(false); }}
-                      className={`flex items-center justify-center rounded-full border transition-all hover:scale-110 ${
-                        settings.width === sz && !eraserOn ? 'border-violet-400 bg-violet-500/30' : 'border-white/20 bg-white/5'
-                      }`}
-                      style={{ width: 26, height: 26 }}>
-                      <span className="rounded-full bg-white" style={{ width: Math.min(sz * 0.6, 16), height: Math.min(sz * 0.6, 16) }} />
-                    </button>
-                  ))}
-                </div>
-                <div className="w-px h-5 bg-white/15" />
-                <button onClick={() => { setEraserOn(false); setSettings(s => ({ ...s, tool: 'pencil' })); }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    !eraserOn ? 'bg-violet-600 text-white' : 'bg-white/10 text-white/50 hover:bg-white/15'
-                  }`}>
-                  <Pencil size={11} /> Draw
-                </button>
-                <button onClick={toggleEraser}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    eraserOn ? 'bg-violet-600 text-white' : 'bg-white/10 text-white/50 hover:bg-white/15'
-                  }`}>
-                  <Eraser size={11} /> Eraser
-                </button>
-                <button onClick={handleClear}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-rose-400 hover:bg-rose-500/20 transition-colors">
-                  <Trash2 size={11} /> Clear
-                </button>
-              </div>
             </div>
           ) : (
-            <div className="bg-[#16213e] border-t border-white/10 p-2.5 flex gap-2 shrink-0">
-              <input ref={inputRef} value={guess} onChange={e => setGuess(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && submitGuess()}
-                placeholder={hasGuessed ? '🎉 You got it! Watch others guess…' : 'Type your guess and press Enter…'}
-                disabled={hasGuessed}
-                className="flex-1 px-3 py-2 rounded-xl bg-white/10 border border-white/10 text-white text-sm placeholder-white/25 focus:border-violet-400 outline-none transition-colors disabled:opacity-40"
-              />
-              <motion.button whileTap={{ scale: 0.9 }} onClick={submitGuess}
-                disabled={hasGuessed || !guess.trim()}
-                className="w-9 h-9 flex items-center justify-center rounded-xl bg-violet-600 text-white hover:bg-violet-500 transition-colors disabled:opacity-30">
-                <Send size={14} />
-              </motion.button>
-            </div>
+            <GuesserCanvas
+              remoteStrokes={gameState.remoteStrokes}
+              liveStroke={gameState.liveStroke}
+              clearTick={gameState.clearTick}
+            />
           )}
-        </div>
 
-        {/* Right: Chat */}
-        <div className="w-52 flex flex-col border-l border-white/10 shrink-0">
+          {/* Guessed banner */}
+          <AnimatePresence>
+            {hasGuessed && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg pointer-events-none">
+                ✓ You guessed it!
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Chat slide-up button (mobile only) */}
+          {!isDrawer && (
+            <button
+              onClick={() => setChatOpen(true)}
+              className="absolute bottom-3 right-3 sm:hidden flex items-center gap-1.5 bg-[#16213e] border border-white/10 text-white/70 text-xs font-semibold px-3 py-2 rounded-xl shadow-lg">
+              <ChevronUp size={13} />
+              Chat
+              {unreadCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-violet-500 text-white text-[9px] font-black flex items-center justify-center">
+                  {Math.min(unreadCount, 9)}
+                </span>
+              )}
+            </button>
+          )}
+        </div>{/* end canvas */}
+
+        {/* Desktop chat sidebar */}
+        <div className="hidden sm:flex w-48 flex-col border-l border-white/10 shrink-0 bg-[#0f0f1a]">
           <div className="px-3 py-2.5 border-b border-white/10 shrink-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">
               {isDrawer ? 'Guesses' : 'Chat'}
@@ -462,6 +418,130 @@ export default function GuessGame({
             )}
           </div>
         </div>
+
+        </div>{/* end canvas + desktop chat row */}
+
+        {/* ── Bottom: tools (drawer) or guess input (guesser) ── */}
+        {isDrawer ? (
+          <div className="bg-[#16213e] border-t border-white/10 px-3 py-2.5 shrink-0 space-y-2">
+            {/* Color grid */}
+            <div className="flex flex-wrap gap-1">
+              {COLORS.map(c => (
+                <button key={c} onClick={() => pickColor(c)}
+                  className={`rounded transition-all active:scale-95 ${
+                    settings.color === c && !eraserOn
+                      ? 'scale-125 ring-2 ring-white ring-offset-1 ring-offset-[#16213e]'
+                      : 'hover:scale-110'
+                  }`}
+                  style={{
+                    width: 22, height: 22,
+                    background: c,
+                    border: c === '#ffffff' ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 4,
+                  }}
+                />
+              ))}
+            </div>
+            {/* Brush + tools row */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                {BRUSH_SIZES.map(sz => (
+                  <button key={sz}
+                    onClick={() => { setSettings(s => ({ ...s, width: sz })); setEraserOn(false); }}
+                    className={`flex items-center justify-center rounded-full border transition-all active:scale-95 ${
+                      settings.width === sz && !eraserOn ? 'border-violet-400 bg-violet-500/30' : 'border-white/20 bg-white/5'
+                    }`}
+                    style={{ width: 28, height: 28 }}>
+                    <span className="rounded-full bg-white" style={{ width: Math.min(sz * 0.65, 18), height: Math.min(sz * 0.65, 18) }} />
+                  </button>
+                ))}
+              </div>
+              <div className="w-px h-5 bg-white/15 shrink-0" />
+              <button onClick={() => { setEraserOn(false); setSettings(s => ({ ...s, tool: 'pencil' })); }}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  !eraserOn ? 'bg-violet-600 text-white' : 'bg-white/10 text-white/50 hover:bg-white/15'
+                }`}>
+                <Pencil size={11} /> Draw
+              </button>
+              <button onClick={toggleEraser}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  eraserOn ? 'bg-violet-600 text-white' : 'bg-white/10 text-white/50 hover:bg-white/15'
+                }`}>
+                <Eraser size={11} /> Erase
+              </button>
+              <button onClick={handleClear}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-rose-400 hover:bg-rose-500/20 transition-colors">
+                <Trash2 size={11} /> Clear
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-[#16213e] border-t border-white/10 p-2.5 flex gap-2 shrink-0">
+            <input ref={inputRef} value={guess} onChange={e => setGuess(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && submitGuess()}
+              placeholder={hasGuessed ? '🎉 You got it! Watch others guess…' : 'Type your guess…'}
+              disabled={hasGuessed}
+              className="flex-1 px-3 py-2.5 rounded-xl bg-white/10 border border-white/10 text-white text-sm placeholder-white/25 focus:border-violet-400 outline-none transition-colors disabled:opacity-40"
+            />
+            <motion.button whileTap={{ scale: 0.9 }} onClick={submitGuess}
+              disabled={hasGuessed || !guess.trim()}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-600 text-white hover:bg-violet-500 transition-colors disabled:opacity-30 shrink-0">
+              <Send size={15} />
+            </motion.button>
+          </div>
+        )}
+
+        {/* ── Mobile chat sheet ── */}
+        <AnimatePresence>
+          {chatOpen && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 z-30 sm:hidden"
+                onClick={() => setChatOpen(false)} />
+              <motion.div
+                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 h-2/3 bg-[#16213e] border-t border-white/10 rounded-t-2xl z-40 sm:hidden flex flex-col">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
+                  <p className="text-xs font-bold uppercase tracking-widest text-white/50">
+                    {isDrawer ? 'Guesses' : 'Chat'}
+                  </p>
+                  <button onClick={() => setChatOpen(false)} className="text-white/40 hover:text-white transition-colors">
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-0">
+                  {gameState.chatMessages.map((msg, i) => (
+                    <div key={i} className={`text-xs px-3 py-2 rounded-xl leading-snug ${
+                      msg.correct ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-bold' : 'bg-white/5 text-white/60'
+                    }`}>
+                      <span className="font-bold text-white/80">{msg.username}: </span>
+                      {isDrawer && msg.correct ? `✓ Guessed it! +${msg.points ?? ''} pts` : msg.message}
+                    </div>
+                  ))}
+                  {gameState.chatMessages.length === 0 && (
+                    <p className="text-sm text-white/20 text-center pt-8">No messages yet</p>
+                  )}
+                </div>
+                {!isDrawer && (
+                  <div className="p-3 border-t border-white/10 flex gap-2 shrink-0">
+                    <input value={guess} onChange={e => setGuess(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && submitGuess()}
+                      placeholder={hasGuessed ? '🎉 You got it!' : 'Type your guess…'}
+                      disabled={hasGuessed}
+                      className="flex-1 px-3 py-2.5 rounded-xl bg-white/10 border border-white/10 text-white text-sm placeholder-white/25 focus:border-violet-400 outline-none transition-colors disabled:opacity-40"
+                    />
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={submitGuess}
+                      disabled={hasGuessed || !guess.trim()}
+                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-600 text-white hover:bg-violet-500 transition-colors disabled:opacity-30 shrink-0">
+                      <Send size={15} />
+                    </motion.button>
+                  </div>
+                )}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
@@ -470,7 +550,7 @@ export default function GuessGame({
   if (gameState.phase === 'results' || gameState.phase === 'finished') {
     const isFinal = gameState.phase === 'finished';
     return (
-      <div className="h-full bg-[#1a1a2e] flex flex-col items-center justify-center p-8 gap-6">
+      <div className="h-full bg-[#1a1a2e] flex flex-col items-center justify-center p-6 gap-5">
         <div className="text-center">
           <p className="text-4xl mb-2">{isFinal ? '🏆' : '📊'}</p>
           <p className="text-white font-black text-2xl" style={{ fontFamily: 'var(--font-display)' }}>

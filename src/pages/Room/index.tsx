@@ -115,13 +115,6 @@ export default function RoomPage() {
   const isEmpty = strokes.length === 0;
   const zoomFactor = zoom / 100;
 
-  const prevStrokesRef = useRef(strokes);
-  useEffect(() => {
-    if (prevStrokesRef.current !== strokes) {
-      canvasRef.current?.redrawAll(strokes);
-      prevStrokesRef.current = strokes;
-    }
-  }, [strokes]);
 
   const getCanvasSize = useCallback(() => {
     const rect = canvasContainer.current?.getBoundingClientRect();
@@ -156,6 +149,7 @@ export default function RoomPage() {
 
   const handleClear = useCallback(() => {
     if (strokes.length === 0) return;
+    strokesRef.current = [];
     canvasRef.current?.clearDrawing();
     remoteRef.current?.clearAll();
     reset([]); emitCanvasClear();
