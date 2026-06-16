@@ -15,15 +15,28 @@ const SAGE = '#3b5c35';
 const PAGE = '#f6fbf2';
 
 /* ─── colorful background blobs ──────────────────────────── */
+function blob(rgb: string, a: number) {
+  return `radial-gradient(circle, rgba(${rgb},${a}) 0%, transparent 65%)`;
+}
+
 function Blobs() {
+  const items: React.CSSProperties[] = [
+    { top:-120, left:-100, width:440, height:440, background: blob('247,37,133', 0.18) },   // pink
+    { top:-80,  right:-80, width:360, height:360, background: blob('255,190,11', 0.22) },   // yellow
+    { bottom:-100, left:'16%', width:380, height:380, background: blob('6,214,160', 0.20) },// teal
+    { bottom:-80, right:-60, width:320, height:320, background: blob('114,9,183', 0.15) },  // purple
+    { top:'36%', left:-80, width:260, height:260, background: blob('251,86,7', 0.15) },     // orange
+    { top:'22%', right:-50, width:230, height:230, background: blob('58,134,255', 0.16) },  // blue
+    { top:'12%', left:'34%', width:300, height:300, background: blob('232,118,90', 0.12) }, // coral
+    { top:'58%', right:'24%', width:260, height:260, background: blob('84,179,164', 0.13) },// sage-teal
+    { bottom:'8%', left:'42%', width:280, height:280, background: blob('240,185,74', 0.12) },// mustard
+    { top:'46%', left:'50%', width:220, height:220, background: blob('194,139,196', 0.11) },// lilac
+  ];
   return (
     <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }} aria-hidden>
-      <div style={{ position:'absolute', top:-120, left:-100, width:420, height:420, borderRadius:'50%', background:'radial-gradient(circle, rgba(247,37,133,0.15) 0%, transparent 65%)' }}/>
-      <div style={{ position:'absolute', top:-80, right:-80, width:340, height:340, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,190,11,0.2) 0%, transparent 65%)' }}/>
-      <div style={{ position:'absolute', bottom:-100, left:'18%', width:360, height:360, borderRadius:'50%', background:'radial-gradient(circle, rgba(6,214,160,0.18) 0%, transparent 65%)' }}/>
-      <div style={{ position:'absolute', bottom:-80, right:-60, width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle, rgba(114,9,183,0.13) 0%, transparent 65%)' }}/>
-      <div style={{ position:'absolute', top:'38%', left:-80, width:240, height:240, borderRadius:'50%', background:'radial-gradient(circle, rgba(251,86,7,0.12) 0%, transparent 65%)' }}/>
-      <div style={{ position:'absolute', top:'25%', right:-60, width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(58,134,255,0.14) 0%, transparent 65%)' }}/>
+      {items.map((s, i) => (
+        <div key={i} style={{ position:'absolute', borderRadius:'50%', ...s }} />
+      ))}
     </div>
   );
 }
@@ -355,9 +368,15 @@ function GameCard({ g, delay }: { g: typeof GAMES[0]; delay: number }) {
 const GamesSection = forwardRef<HTMLElement>((_, ref) => (
   <section
     ref={ref}
-    style={{ background:'#ffffff', padding:'96px 40px 80px' }}
+    style={{ background:'#ffffff', padding:'96px 40px 80px', position:'relative', overflow:'hidden' }}
   >
-    <div style={{ maxWidth:1100, margin:'0 auto' }}>
+    {/* color accents */}
+    <div aria-hidden style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
+      <div style={{ position:'absolute', top:-60, left:-60, width:280, height:280, borderRadius:'50%', background:blob('247,37,133',0.10) }}/>
+      <div style={{ position:'absolute', top:'30%', right:-70, width:300, height:300, borderRadius:'50%', background:blob('58,134,255',0.10) }}/>
+      <div style={{ position:'absolute', bottom:-80, left:'30%', width:320, height:320, borderRadius:'50%', background:blob('240,185,74',0.10) }}/>
+    </div>
+    <div style={{ maxWidth:1100, margin:'0 auto', position:'relative', zIndex:1 }}>
       {/* heading */}
       <motion.div
         initial={{ opacity:0, y:24 }}
@@ -406,9 +425,13 @@ function Features() {
     { accent:'#ffbe0b', title:'Auto-Save to Cloud', body:'Your work is always safe'         },
   ];
   return (
-    <section style={{ background: PAGE, padding:'64px 40px' }}>
+    <section style={{ background: PAGE, padding:'64px 40px', position:'relative', overflow:'hidden' }}>
+      <div aria-hidden style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
+        <div style={{ position:'absolute', top:'10%', left:-70, width:260, height:260, borderRadius:'50%', background:blob('6,214,160',0.14) }}/>
+        <div style={{ position:'absolute', bottom:-60, right:-50, width:280, height:280, borderRadius:'50%', background:blob('251,86,7',0.12) }}/>
+      </div>
       <div style={{
-        maxWidth:1100, margin:'0 auto',
+        maxWidth:1100, margin:'0 auto', position:'relative', zIndex:1,
         display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(210px,1fr))', gap:18,
       }}>
         {rows.map((r, i) => (
