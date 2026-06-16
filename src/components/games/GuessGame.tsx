@@ -84,9 +84,11 @@ function denormaliseStroke(stroke: Stroke, el: HTMLElement): Stroke {
 function GuesserCanvas({ remoteStrokes, liveStroke, clearTick }: {
   remoteStrokes: Stroke[]; liveStroke: Stroke | null; clearTick: number;
 }) {
-  const canvasRef        = useRef<CanvasHandle>(null);
-  const containerRef     = useRef<HTMLDivElement>(null);
-  const renderedCountRef = useRef(0);
+  const canvasRef          = useRef<CanvasHandle>(null);
+  const containerRef       = useRef<HTMLDivElement>(null);
+  const renderedCountRef   = useRef(0);
+  const remoteStrokesRef   = useRef(remoteStrokes);
+  remoteStrokesRef.current = remoteStrokes;
 
   const deNorm = (s: Stroke) =>
     containerRef.current ? denormaliseStroke(s, containerRef.current) : s;
@@ -103,7 +105,9 @@ function GuesserCanvas({ remoteStrokes, liveStroke, clearTick }: {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !liveStroke) return;
-    canvas.redrawAll([...remoteStrokes.map(deNorm), deNorm(liveStroke)]);
+    // Use ref so this always reads the latest remoteStrokes even if they
+    // changed between this effect firing and the last render.
+    canvas.redrawAll([...remoteStrokesRef.current.map(deNorm), deNorm(liveStroke)]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveStroke]);
 
@@ -136,6 +140,7 @@ export default function GuessGame({
   const chatRef             = useRef<HTMLDivElement>(null);
   const inputRef            = useRef<HTMLInputElement>(null);
   const liveStrokeRef       = useRef<Stroke | null>(null);
+  const lastSentPointsRef   = useRef(0);
   const sendTimerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const norm = (s: Stroke) =>
@@ -161,6 +166,7 @@ export default function GuessGame({
   useEffect(() => {
     setLocalStrokes([]);
     liveStrokeRef.current = null;
+    lastSentPointsRef.current = 0;
   }, [gameState.clearTick, gameState.round]);
 
   // Focus guess input
@@ -170,13 +176,17 @@ export default function GuessGame({
     }
   }, [gameState.phase, isDrawer, hasGuessed]);
 
-  // Send live stroke every 50ms while drawing
+  // Send live stroke every 80ms. Skip if no new points since last send
+  // to avoid flooding the socket with identical large messages.
   useEffect(() => {
     if (!isDrawer) return;
     sendTimerRef.current = setInterval(() => {
       const s = liveStrokeRef.current;
-      if (s && s.points.length > 1) onSendLiveStroke?.(norm(s));
-    }, 50);
+      if (!s || s.points.length <= 1) return;
+      if (s.points.length === lastSentPointsRef.current) return;
+      lastSentPointsRef.current = s.points.length;
+      onSendLiveStroke?.(norm(s));
+    }, 80);
     return () => { if (sendTimerRef.current) clearInterval(sendTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDrawer, onSendLiveStroke]);

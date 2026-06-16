@@ -184,8 +184,7 @@ export function registerGameHandlers(io: Server, socket: Socket) {
     const game   = gameManager.get(gameId);
     if (!game || game.hostId !== userId) return;
     if (game.players.size < 1) { socket.emit('game:error', { message: 'Need at least 1 player' }); return; }
-    gameManager.startGame(game);
-    if (game.type !== 'guess') gameManager.pickPrompt(game);
+    gameManager.startGame(game); // startGame already calls pickPrompt internally
     startCountdown(io, gameId);
   });
 

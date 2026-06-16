@@ -53,12 +53,17 @@ export function useGameRoom(socket: Socket | null) {
 
   const patch = useCallback((p: Partial<GameRoomState>) => setState(s => ({ ...s, ...p })), []);
 
-  // Client-side countdown timer
+  // Client-side countdown timer — depends only on phase so the interval
+  // is created once per drawing phase, not recreated every tick (which
+  // would add React render overhead and cause noticeable drift).
   useEffect(() => {
-    if (state.phase !== 'drawing' || state.timeLeft <= 0) return;
-    const id = setInterval(() => setState(s => ({ ...s, timeLeft: Math.max(0, s.timeLeft - 1) })), 1000);
+    if (state.phase !== 'drawing') return;
+    const id = setInterval(() => setState(s => {
+      if (s.phase !== 'drawing' || s.timeLeft <= 0) return s;
+      return { ...s, timeLeft: s.timeLeft - 1 };
+    }), 1000);
     return () => clearInterval(id);
-  }, [state.phase, state.timeLeft]);
+  }, [state.phase]);
 
   useEffect(() => {
     if (!socket) return;

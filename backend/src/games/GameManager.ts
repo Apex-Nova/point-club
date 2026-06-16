@@ -228,10 +228,16 @@ class GameManager {
     game.players.forEach(p => { p.hasDrawn = false; p.hasVoted = false; });
 
     if (game.type === 'guess') {
-      // Rotate drawer
-      game.drawerId = game.drawerQueue.shift() ?? null;
+      // Refill the queue when exhausted so extra rounds cycle through players again
+      if (game.drawerQueue.length === 0) {
+        game.drawerQueue = Array.from(game.players.keys()).filter(id => id !== game.drawerId);
+        if (game.drawerQueue.length === 0) {
+          game.drawerQueue = Array.from(game.players.keys());
+        }
+      }
+      game.players.forEach(p => { p.isDrawer = false; });
+      game.drawerId = game.drawerQueue.shift() ?? Array.from(game.players.keys())[0] ?? null;
       if (game.drawerId) {
-        game.players.forEach(p => { p.isDrawer = false; });
         const drawer = game.players.get(game.drawerId);
         if (drawer) { drawer.isDrawer = true; drawer.hasDrawn = true; }
       }
