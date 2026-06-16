@@ -10,36 +10,22 @@ import type { ToolSettings, ToolType } from '../types';
 import type { CloudSaveStatus } from '@/hooks/useCloudSave';
 import ConnectMenu from './ConnectMenu';
 
-const TOOL_GROUPS: { tools: { type: ToolType; icon: React.ElementType; label: string; key: string; color?: string }[] }[] = [
-  {
-    tools: [
-      { type: 'hand',        icon: Hand,       label: 'Pan (H)',          key: 'H' },
-      { type: 'text',        icon: Type,        label: 'Text (T)',         key: 'T' },
-    ],
-  },
-  {
-    tools: [
-      { type: 'pencil',      icon: Pencil,      label: 'Pencil (P)',       key: 'P',  color: '#555' },
-      { type: 'marker',      icon: Pen,         label: 'Marker (M)',       key: 'M',  color: '#e63946' },
-      { type: 'brush',       icon: Paintbrush,  label: 'Brush (B)',        key: 'B',  color: '#4895ef' },
-      { type: 'spray',       icon: Droplets,    label: 'Spray (S)',        key: 'S',  color: '#52b788' },
-      { type: 'calligraphy', icon: Pen,         label: 'Calligraphy (C)',  key: 'C',  color: '#9b5de5' },
-    ],
-  },
-  {
-    tools: [
-      { type: 'eraser',      icon: Eraser,      label: 'Eraser (E)',       key: 'E' },
-    ],
-  },
+const TOOLS: { type: ToolType; icon: React.ElementType; label: string; key: string; color?: string }[] = [
+  { type: 'pencil',      icon: Pencil,     label: 'Pencil (P)',      key: 'P', color: '#555'    },
+  { type: 'brush',       icon: Paintbrush, label: 'Brush (B)',       key: 'B', color: '#4895ef' },
+  { type: 'marker',      icon: Pen,        label: 'Marker (M)',      key: 'M', color: '#e63946' },
+  { type: 'spray',       icon: Droplets,   label: 'Spray (S)',       key: 'S', color: '#52b788' },
+  { type: 'eraser',      icon: Eraser,     label: 'Eraser (E)',      key: 'E'                   },
+  { type: 'hand',        icon: Hand,       label: 'Pan (H)',         key: 'H'                   },
+  { type: 'text',        icon: Type,       label: 'Text (T)',        key: 'T'                   },
 ];
 
-interface StatusConfig { icon: React.ElementType; label: string; cls: string }
-const STATUS_MAP: Record<CloudSaveStatus, StatusConfig> = {
-  idle:    { icon: Cloud,      label: '',         cls: 'text-gray-300' },
-  unsaved: { icon: CloudOff,   label: 'Unsaved',  cls: 'text-orange-400' },
-  saving:  { icon: Loader2,    label: 'Saving…',  cls: 'text-blue-400 animate-spin' },
-  saved:   { icon: CheckCheck, label: 'Saved',    cls: 'text-emerald-500' },
-  error:   { icon: CloudOff,   label: 'Error',    cls: 'text-red-400' },
+const STATUS_MAP: Record<CloudSaveStatus, { icon: React.ElementType; cls: string; tip: string }> = {
+  idle:    { icon: Cloud,      cls: 'text-gray-300',              tip: 'Saved'      },
+  unsaved: { icon: CloudOff,   cls: 'text-orange-400',            tip: 'Unsaved'    },
+  saving:  { icon: Loader2,    cls: 'text-blue-400 animate-spin', tip: 'Saving…'    },
+  saved:   { icon: CheckCheck, cls: 'text-emerald-500',           tip: 'Saved'      },
+  error:   { icon: CloudOff,   cls: 'text-red-400',               tip: 'Save error' },
 };
 
 interface Props {
@@ -59,12 +45,44 @@ interface Props {
   onCreateRoom?: () => Promise<void>;
   onJoinRoom?: (code: string) => void;
   onScribble?: () => void;
-  /** Optional slot rendered after the AI button — use for room-specific controls */
   rightSlot?: React.ReactNode;
 }
 
 function Sep() {
-  return <div className="w-px h-6 rounded-full mx-1" style={{ background: '#e8e8e8' }} />;
+  return <div className="w-px h-5 rounded-full shrink-0" style={{ background: '#e8e8e8' }} />;
+}
+
+function IconBtn({
+  onClick, disabled, title, active, activeColor, children, className, style,
+}: {
+  onClick?: () => void;
+  disabled?: boolean;
+  title: string;
+  active?: boolean;
+  activeColor?: string;
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <motion.button
+      whileHover={!disabled ? { scale: 1.1 } : {}}
+      whileTap={!disabled ? { scale: 0.9 } : {}}
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={cn(
+        'w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0',
+        active ? 'shadow-sm' : disabled ? 'opacity-25 cursor-not-allowed' : 'hover:bg-gray-100',
+        className,
+      )}
+      style={active && activeColor
+        ? { background: `${activeColor}18`, boxShadow: `0 0 0 1.5px ${activeColor}`, ...style }
+        : style}
+    >
+      {children}
+    </motion.button>
+  );
 }
 
 export default function PaintToolbar({
@@ -76,123 +94,87 @@ export default function PaintToolbar({
 
   return (
     <div
-      className="flex items-center px-3 gap-1 shrink-0 z-20"
-      style={{ height: 52, background: '#fff', borderBottom: '1px solid #ebebeb' }}
+      className="flex items-center px-2 gap-1 shrink-0 z-20"
+      style={{ height: 44, background: '#fff', borderBottom: '1px solid #ebebeb' }}
     >
       {/* Back */}
       <Link
         to="/dashboard"
-        className="flex items-center justify-center w-8 h-8 rounded-xl hover:bg-gray-100 transition-colors shrink-0"
+        className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors shrink-0"
         title="Back to Dashboard"
       >
-        <ArrowLeft size={16} className="text-gray-500" />
+        <ArrowLeft size={15} className="text-gray-400" />
       </Link>
-
-      {/* Undo / Redo */}
-      <button
-        onClick={onUndo} disabled={!canUndo} title="Undo (Ctrl+Z)"
-        className={cn('w-8 h-8 rounded-xl flex items-center justify-center transition-colors',
-          canUndo ? 'hover:bg-gray-100 text-gray-600' : 'text-gray-300 cursor-not-allowed')}
-      >
-        <Undo2 size={15} />
-      </button>
-      <button
-        onClick={onRedo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)"
-        className={cn('w-8 h-8 rounded-xl flex items-center justify-center transition-colors',
-          canRedo ? 'hover:bg-gray-100 text-gray-600' : 'text-gray-300 cursor-not-allowed')}
-      >
-        <Redo2 size={15} />
-      </button>
 
       <Sep />
 
-      {/* Tool groups */}
-      {TOOL_GROUPS.map((group, gi) => (
-        <div key={gi} className="flex items-center gap-0.5">
-          {group.tools.map(({ type, icon: Icon, label, color }) => {
-            const active = settings.tool === type;
-            return (
-              <motion.button
-                key={type}
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
-                onClick={() => onSettingsChange({ tool: type })}
-                title={label}
-                className={cn(
-                  'w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-100',
-                  active ? 'shadow-sm' : 'hover:bg-gray-100',
-                )}
-                style={active ? { background: color ? `${color}22` : '#4361ee18', boxShadow: `0 0 0 2px ${color ?? '#4361ee'}` } : {}}
-              >
-                <Icon size={15} style={{ color: active ? (color ?? '#4361ee') : '#555' }} />
-              </motion.button>
-            );
-          })}
-          {gi < TOOL_GROUPS.length - 1 && <Sep />}
-        </div>
-      ))}
+      {/* Undo / Redo */}
+      <IconBtn onClick={onUndo} disabled={!canUndo} title="Undo (Ctrl+Z)">
+        <Undo2 size={14} className={canUndo ? 'text-gray-600' : 'text-gray-300'} />
+      </IconBtn>
+      <IconBtn onClick={onRedo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">
+        <Redo2 size={14} className={canRedo ? 'text-gray-600' : 'text-gray-300'} />
+      </IconBtn>
+
+      <Sep />
+
+      {/* Tools */}
+      {TOOLS.map(({ type, icon: Icon, label, color }) => {
+        const active = settings.tool === type;
+        return (
+          <IconBtn
+            key={type}
+            onClick={() => onSettingsChange({ tool: type })}
+            title={label}
+            active={active}
+            activeColor={color ?? '#4361ee'}
+          >
+            <Icon size={14} style={{ color: active ? (color ?? '#4361ee') : '#666' }} />
+          </IconBtn>
+        );
+      })}
 
       <Sep />
 
       {/* Clear */}
-      <motion.button
-        whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
-        onClick={onClear} title="Clear canvas"
-        className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-red-50 transition-colors"
-      >
-        <Trash2 size={15} className="text-gray-400 hover:text-red-400" />
-      </motion.button>
+      <IconBtn onClick={onClear} title="Clear canvas">
+        <Trash2 size={14} className="text-gray-400 hover:text-red-400 transition-colors" />
+      </IconBtn>
 
-      {/* Title (center) */}
-      <div className="flex-1 flex items-center justify-center min-w-0">
-        <span className="text-sm font-semibold text-gray-500 truncate max-w-[200px]">
+      {/* Title — center */}
+      <div className="flex-1 flex items-center justify-center min-w-0 px-2">
+        <span className="text-xs font-semibold text-gray-400 truncate max-w-[180px]">
           {title ?? 'Untitled'}
         </span>
       </div>
 
       {/* Right cluster */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        {/* Cloud save status */}
+      <div className="flex items-center gap-1 shrink-0">
+        {/* Save status */}
         {st && (
-          <button
-            onClick={onSave}
-            className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
-            title="Save"
-          >
+          <IconBtn onClick={onSave} title={st.tip}>
             <st.icon size={13} className={st.cls} />
-            {st.label && <span className={`text-xs font-medium ${st.cls}`}>{st.label}</span>}
-          </button>
+          </IconBtn>
         )}
 
         {/* Export */}
-        <motion.button
-          whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-          onClick={onExport}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors"
-          style={{ background: '#f0f0f0', color: '#555' }}
-          title="Export PNG"
-        >
-          <ImageDown size={13} />
-          Export
-        </motion.button>
+        <IconBtn onClick={onExport} title="Export PNG">
+          <ImageDown size={14} className="text-gray-500" />
+        </IconBtn>
 
-        {/* AI toggle */}
-        <motion.button
-          whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+        <Sep />
+
+        {/* AI */}
+        <IconBtn
           onClick={onToggleAI}
           title="AI Assistant"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all"
-          style={{
-            background: aiOpen ? '#9b5de522' : '#f0f0f0',
-            color: aiOpen ? '#9b5de5' : '#888',
-            boxShadow: aiOpen ? '0 0 0 1.5px #9b5de5' : undefined,
-          }}
+          active={aiOpen}
+          activeColor="#9b5de5"
         >
-          <Sparkles size={13} />
-          AI
-        </motion.button>
+          <Sparkles size={14} style={{ color: aiOpen ? '#9b5de5' : '#888' }} />
+        </IconBtn>
 
-        {/* Multiplayer connect — only in solo draw mode */}
+        {/* Multiplayer connect */}
         {onCreateRoom && onJoinRoom && onScribble && (
           <ConnectMenu
             onCreateRoom={onCreateRoom}
@@ -201,7 +183,7 @@ export default function PaintToolbar({
           />
         )}
 
-        {/* Room-specific slot (voice, invite, status…) */}
+        {/* Room-specific slot */}
         {rightSlot}
       </div>
     </div>

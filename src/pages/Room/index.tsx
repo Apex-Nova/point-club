@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Canvas from '@/drawing/components/Canvas';
 import PaintToolbar from '@/drawing/components/PaintToolbar';
 import FloatingPalette from '@/drawing/components/FloatingPalette';
-import ZoomBar from '@/drawing/components/ZoomBar';
+import { Minus, Plus } from 'lucide-react';
 import EmptyState from '@/drawing/components/EmptyState';
 import ToastContainer from '@/drawing/components/ToastContainer';
 import RemoteStrokesLayer, { type RemoteStrokesHandle } from '@/components/room/RemoteStrokesLayer';
@@ -408,8 +408,22 @@ export default function RoomPage() {
           </AnimatePresence>
         </div>
 
-        {/* Zoom bar */}
-        <ZoomBar zoom={zoom} onZoomChange={setZoom} />
+        {/* Zoom strip */}
+        <div className="shrink-0 flex items-center gap-1 px-3"
+          style={{ height: 36, background: '#fff', borderTop: '1px solid #ebebeb' }}>
+          <button onClick={() => setZoom(z => Math.max(25, z - 25))} title="Zoom out"
+            className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-gray-100 transition-colors">
+            <Minus size={11} className="text-gray-500" />
+          </button>
+          <button onClick={() => setZoom(100)} title="Reset zoom"
+            className="min-w-[44px] text-xs font-semibold text-gray-500 hover:bg-gray-100 px-1.5 py-0.5 rounded-md transition-colors tabular-nums">
+            {zoom}%
+          </button>
+          <button onClick={() => setZoom(z => Math.min(300, z + 25))} title="Zoom in"
+            className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-gray-100 transition-colors">
+            <Plus size={11} className="text-gray-500" />
+          </button>
+        </div>
       </div>
 
       {presenting && (

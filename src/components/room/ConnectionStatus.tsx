@@ -10,8 +10,15 @@ const config: Record<ConnectionStatus, { icon: React.ElementType; label: string;
   disconnected: { icon: WifiOff,   label: 'Disconnected', cls: 'text-coral' },
 };
 
-export default function ConnectionStatusBadge({ status }: { status: ConnectionStatus }) {
+export default function ConnectionStatusBadge({ status, compact }: { status: ConnectionStatus; compact?: boolean }) {
   const { icon: Icon, label, cls } = config[status];
+  if (compact) {
+    return (
+      <motion.div key={status} initial={{ opacity: 0 }} animate={{ opacity: 1 }} title={label}>
+        <Icon size={12} className={cls} />
+      </motion.div>
+    );
+  }
   return (
     <motion.div
       key={status}
