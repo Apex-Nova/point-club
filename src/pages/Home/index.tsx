@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 
-const DrawScene = lazy(() => import('./DrawScene'));
+const DrawScene  = lazy(() => import('./DrawScene'));
+const ScrollHoli = lazy(() => import('./ScrollHoli'));
 
 /* ─── tokens ──────────────────────────────────────────────── */
 const INK  = '#111c0e';
@@ -531,6 +532,11 @@ export default function Home() {
 
   return (
     <div style={{ background: PAGE }}>
+      {/* 3D Holi color splash that bursts as you scroll */}
+      <Suspense fallback={null}>
+        <ScrollHoli />
+      </Suspense>
+
       <Hero onScrollToGames={() => gamesRef.current?.scrollIntoView({ behavior:'smooth' })} />
       <GamesSection ref={gamesRef} />
       <Features />
