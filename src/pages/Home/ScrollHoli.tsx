@@ -2,11 +2,13 @@ import { useRef, useEffect, useMemo, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-/* vivid Holi powder palette */
+/* warm Holi festival palette — pink · yellow · green · blue · orange */
 const POWDER = [
-  '#f72585', '#ff006e', '#b5179e', '#7209b7', '#560bad',
-  '#3a86ff', '#4cc9f0', '#06d6a0', '#80ed99',
-  '#ffd60a', '#ffbe0b', '#fb5607', '#ff5400',
+  '#ff5d8f', '#ff85a1',          // pink
+  '#ffd23f', '#ffcf5c',          // yellow
+  '#4cc66b', '#80ed99', '#2f7d3e', // green
+  '#48b8ff', '#7ec8e3',          // sky blue
+  '#ff8c42', '#ff7b54',          // orange
 ];
 
 interface Burst { x: number; y: number; key: number }
@@ -54,7 +56,7 @@ function PowderCloud({ burst, onDone }: { burst: Burst; onDone: (k: number) => v
     if (ref.current) {
       (ref.current.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
       const mat = ref.current.material as THREE.PointsMaterial;
-      mat.opacity = Math.max(0, 0.9 * (1 - age / 2.4));
+      mat.opacity = Math.max(0, 0.62 * (1 - age / 2.4));
       mat.size = 0.12 + age * 0.05;
     }
   });
@@ -66,8 +68,8 @@ function PowderCloud({ burst, onDone }: { burst: Burst; onDone: (k: number) => v
         <bufferAttribute attach="attributes-color"    array={colors}    count={COUNT} itemSize={3} />
       </bufferGeometry>
       <pointsMaterial
-        size={0.13} vertexColors transparent opacity={0.9}
-        sizeAttenuation depthWrite={false} blending={THREE.AdditiveBlending}
+        size={0.13} vertexColors transparent opacity={0.62}
+        sizeAttenuation depthWrite={false} blending={THREE.NormalBlending}
       />
     </points>
   );
@@ -106,8 +108,8 @@ export default function ScrollHoli() {
       lastY.current = y;
       accum.current += delta;
       const now = performance.now();
-      // fire a splash every ~220px of scroll, throttled to 180ms
-      if (accum.current > 220 && now - lastBurst.current > 180) {
+      // fire a splash every ~320px of scroll, throttled to 220ms (kept gentle for readability)
+      if (accum.current > 320 && now - lastBurst.current > 220) {
         accum.current = 0;
         lastBurst.current = now;
         spawn();

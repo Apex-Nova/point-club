@@ -1,362 +1,381 @@
 import { Suspense, useRef, useState, forwardRef, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
-  Users, Swords, HelpCircle, Globe, Pencil,
-  ArrowRight, Plus, DoorOpen, Play, ChevronDown,
+  Users, Swords, HelpCircle, Pencil, Sparkles, Trophy, Palette, Heart,
+  Play, ChevronDown, MessageCircle, Star,
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 
-const DrawScene  = lazy(() => import('./DrawScene'));
-const ScrollHoli = lazy(() => import('./ScrollHoli'));
+const ForestScene = lazy(() => import('./ForestScene'));
+const ScrollHoli  = lazy(() => import('./ScrollHoli'));
 
-/* ─── tokens ──────────────────────────────────────────────── */
-const INK  = '#111c0e';
-const SAGE = '#3b5c35';
-const PAGE = '#f6fbf2';
+/* ── Forest tokens ───────────────────────────────────────────── */
+const INK    = '#14301a';   // dark green text
+const BROWN  = '#5b4128';   // dark brown text
+const CHAR   = '#2c332c';   // charcoal
+const LEAF   = '#2f7d3e';   // forest/grass green
+const LEAF_D = '#205c2c';
+const CREAM  = '#fbf6e9';
+const PAGE   = '#f3f8ec';   // cream-white page
+const SUN     = '#ffcf5c';  // warm yellow
+const SKY     = '#7ec8e3';  // sky blue
 
-/* ─── colorful background blobs ──────────────────────────── */
-function blob(rgb: string, a: number) {
-  return `radial-gradient(circle, rgba(${rgb},${a}) 0%, transparent 65%)`;
-}
-
-function Blobs() {
-  const items: React.CSSProperties[] = [
-    { top:-120, left:-100, width:440, height:440, background: blob('247,37,133', 0.18) },   // pink
-    { top:-80,  right:-80, width:360, height:360, background: blob('255,190,11', 0.22) },   // yellow
-    { bottom:-100, left:'16%', width:380, height:380, background: blob('6,214,160', 0.20) },// teal
-    { bottom:-80, right:-60, width:320, height:320, background: blob('114,9,183', 0.15) },  // purple
-    { top:'36%', left:-80, width:260, height:260, background: blob('251,86,7', 0.15) },     // orange
-    { top:'22%', right:-50, width:230, height:230, background: blob('58,134,255', 0.16) },  // blue
-    { top:'12%', left:'34%', width:300, height:300, background: blob('232,118,90', 0.12) }, // coral
-    { top:'58%', right:'24%', width:260, height:260, background: blob('84,179,164', 0.13) },// sage-teal
-    { bottom:'8%', left:'42%', width:280, height:280, background: blob('240,185,74', 0.12) },// mustard
-    { top:'46%', left:'50%', width:220, height:220, background: blob('194,139,196', 0.11) },// lilac
-  ];
-  return (
-    <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }} aria-hidden>
-      {items.map((s, i) => (
-        <div key={i} style={{ position:'absolute', borderRadius:'50%', ...s }} />
-      ))}
-    </div>
-  );
-}
-
-/* ─── hero section ────────────────────────────────────────── */
-function Hero({ onScrollToGames }: { onScrollToGames: () => void }) {
-  const navigate   = useNavigate();
-  const [joining, setJoining] = useState(false);
-  const [code, setCode]       = useState('');
+/* ════════════════════════════════════════════════════════════
+   HERO — full-bleed forest world
+   ════════════════════════════════════════════════════════════ */
+function Hero({ onExplore }: { onExplore: () => void }) {
+  const navigate = useNavigate();
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, -80]);
+  const copyFade = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
 
   return (
-    <section style={{ position:'relative', minHeight:'100vh', background: PAGE, overflow:'hidden' }}>
-      <Blobs />
+    <section
+      ref={ref}
+      style={{
+        position: 'relative', minHeight: '100vh', overflow: 'hidden',
+        background: `linear-gradient(180deg, ${SKY}33 0%, ${PAGE} 55%, ${PAGE} 100%)`,
+      }}
+    >
+      {/* soft sun glow */}
+      <div aria-hidden style={{
+        position: 'absolute', top: '-12%', right: '8%', width: 420, height: 420, borderRadius: '50%',
+        background: `radial-gradient(circle, ${SUN}88 0%, transparent 65%)`, pointerEvents: 'none', filter: 'blur(8px)',
+      }} />
 
-      {/* fixed navbar lives above everything */}
-      <Navbar />
-
-      {/* hero body — two columns */}
-      <div style={{
-        position:'relative', zIndex:10,
-        maxWidth:1200, margin:'0 auto',
-        padding:'140px 40px 100px',
-        display:'flex', flexWrap:'wrap',
-        alignItems:'center', gap:48,
-      }}>
-
-        {/* ── LEFT: copy ── */}
-        <div style={{ flex:'1 1 360px', minWidth:0, maxWidth:560 }}>
-
-          {/* eyebrow */}
-          <div style={{
-            display:'inline-flex', alignItems:'center', gap:8,
-            fontSize:11, fontWeight:800, letterSpacing:'0.18em', textTransform:'uppercase',
-            color:'#7209b7', background:'rgba(114,9,183,0.09)',
-            border:'1px solid rgba(114,9,183,0.2)',
-            borderRadius:99, padding:'6px 14px',
-            marginBottom:24,
-          }}>
-            <span style={{ width:7, height:7, borderRadius:'50%', background:'#7209b7' }}/>
-            Creative Multiplayer Games
-          </div>
-
-          {/* headline */}
-          <h1 style={{
-            fontFamily:'var(--font-display)',
-            fontSize:'clamp(2.6rem, 5.5vw, 4.8rem)',
-            fontWeight:900, lineHeight:1.05,
-            color: INK, margin:'0 0 20px',
-            letterSpacing:'-0.02em',
-          }}>
-            Draw, Play &amp;<br/>
-            <span style={{ color:'#1a7a36' }}>Create Together</span>
-          </h1>
-
-          {/* sub */}
-          <p style={{ fontSize:17, color: SAGE, lineHeight:1.68, margin:'0 0 32px', maxWidth:440 }}>
-            Real-time multiplayer drawing games, an infinite canvas, and AI tools — all in one place. Free to start.
-          </p>
-
-          {/* CTAs */}
-          <div style={{ display:'flex', flexWrap:'wrap', gap:12, marginBottom:28 }}>
-            <button
-              onClick={() => navigate('/draw')}
-              style={{
-                display:'flex', alignItems:'center', gap:8,
-                padding:'13px 28px', borderRadius:14,
-                background:'#1a7a36', color:'#fff',
-                fontWeight:800, fontSize:15,
-                boxShadow:'0 4px 18px rgba(26,122,54,0.32)',
-                border:'none', cursor:'pointer',
-              }}
-            >
-              <Pencil size={15}/> Start Drawing Free
-            </button>
-            <button
-              onClick={onScrollToGames}
-              style={{
-                display:'flex', alignItems:'center', gap:8,
-                padding:'13px 28px', borderRadius:14,
-                background:'transparent', color: INK,
-                fontWeight:700, fontSize:15,
-                border:'1.5px solid rgba(17,28,14,0.2)',
-                cursor:'pointer',
-              }}
-            >
-              See Games <ArrowRight size={14}/>
-            </button>
-          </div>
-
-          {/* join room */}
-          <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:28 }}>
-            {!joining ? (
-              <button
-                onClick={() => setJoining(true)}
-                style={{
-                  display:'flex', alignItems:'center', gap:7,
-                  fontSize:13, fontWeight:600, color: SAGE,
-                  background:'rgba(26,122,54,0.07)',
-                  border:'1px solid rgba(26,122,54,0.2)',
-                  borderRadius:10, padding:'8px 16px', cursor:'pointer',
-                }}
-              >
-                <DoorOpen size={14}/> Join a room
-              </button>
-            ) : (
-              <div style={{ display:'flex', gap:8 }}>
-                <input
-                  autoFocus
-                  placeholder="Enter room code…"
-                  value={code}
-                  onChange={e => setCode(e.target.value.toUpperCase())}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && code.trim()) navigate(`/room/${code.trim()}`);
-                    if (e.key === 'Escape') { setJoining(false); setCode(''); }
-                  }}
-                  maxLength={8}
-                  style={{
-                    padding:'8px 14px', borderRadius:10, width:160,
-                    border:'1.5px solid rgba(26,122,54,0.4)',
-                    background:'#fff', color: INK,
-                    fontFamily:'monospace', fontWeight:700,
-                    fontSize:14, outline:'none',
-                  }}
-                />
-                <button
-                  onClick={() => code.trim() && navigate(`/room/${code.trim()}`)}
-                  style={{
-                    padding:'8px 16px', borderRadius:10,
-                    background:'#1a7a36', color:'#fff',
-                    fontWeight:700, fontSize:13,
-                    border:'none', cursor:'pointer',
-                  }}
-                >
-                  <Plus size={14}/>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* stat pills */}
-          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-            {[
-              { v:'20+',    l:'Players per room' },
-              { v:'< 50ms', l:'Latency'          },
-              { v:'Free',   l:'No credit card'   },
-            ].map(s => (
-              <span key={s.l} style={{
-                fontSize:12, fontWeight:600, color: SAGE,
-                background:'rgba(26,122,54,0.07)',
-                border:'1px solid rgba(26,122,54,0.16)',
-                borderRadius:8, padding:'5px 12px',
-              }}>
-                <strong style={{ color: INK }}>{s.v}</strong> {s.l}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ── RIGHT: 3D scene ── */}
-        <div style={{
-          flex:'1 1 340px', minWidth:0,
-          height:'clamp(360px, 48vw, 560px)',
-          borderRadius:28,
-          background:'rgba(26,122,54,0.04)',
-          border:'1px solid rgba(26,122,54,0.1)',
-          overflow:'hidden',
-          position:'relative',
-        }}>
-          <Suspense fallback={
-            <div style={{
-              width:'100%', height:'100%',
-              display:'flex', alignItems:'center', justifyContent:'center',
-            }}>
-              <span style={{ color: SAGE, fontSize:13 }}>Loading…</span>
-            </div>
-          }>
-            <DrawScene />
-          </Suspense>
-        </div>
+      {/* the living forest fills the whole screen */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+        <Suspense fallback={<div style={{ width: '100%', height: '100%' }} />}>
+          <ForestScene />
+        </Suspense>
       </div>
 
-      {/* scroll arrow */}
-      <button
-        onClick={onScrollToGames}
+      <Navbar />
+
+      {/* hero copy — centered, floats above the world */}
+      <motion.div
         style={{
-          position:'absolute', bottom:32, left:'50%', transform:'translateX(-50%)',
-          display:'flex', flexDirection:'column', alignItems:'center', gap:6,
-          color: SAGE, background:'none', border:'none', cursor:'pointer',
+          position: 'relative', zIndex: 10, y: copyY, opacity: copyFade,
+          maxWidth: 760, margin: '0 auto', textAlign: 'center',
+          padding: '150px 28px 0', pointerEvents: 'none',
         }}
       >
-        <span style={{ fontSize:10, fontWeight:700, letterSpacing:'0.2em', textTransform:'uppercase' }}>
-          Choose Your Game
-        </span>
-        <motion.div animate={{ y:[0,5,0] }} transition={{ repeat:Infinity, duration:1.7 }}>
-          <ChevronDown size={18}/>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontSize: 11, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase',
+            color: LEAF_D, background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(6px)',
+            border: `1px solid ${LEAF}33`, borderRadius: 99, padding: '7px 16px', marginBottom: 22,
+            boxShadow: '0 4px 14px rgba(32,92,44,0.12)',
+          }}
+        >
+          <Sparkles size={13} /> A creative forest playground
         </motion.div>
-      </button>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.7 }}
+          style={{
+            fontFamily: 'var(--font-display)', fontWeight: 900, lineHeight: 1.02,
+            fontSize: 'clamp(2.8rem, 7vw, 5.6rem)', color: INK, margin: '0 0 18px',
+            letterSpacing: '-0.02em', textShadow: '0 2px 20px rgba(251,246,233,0.8)',
+          }}
+        >
+          Create. Play.<br />
+          <span style={{ color: LEAF }}>Imagine.</span>
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45, duration: 0.6 }}
+          style={{ fontSize: 'clamp(15px, 2vw, 19px)', color: BROWN, lineHeight: 1.6, margin: '0 auto 34px', maxWidth: 480, fontWeight: 600, textShadow: '0 1px 12px rgba(251,246,233,0.9)' }}
+        >
+          Step into a magical forest where you draw, play, and build worlds together with friends.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }}
+          style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', pointerEvents: 'auto' }}
+        >
+          <motion.button
+            whileHover={{ y: -3, scale: 1.03 }} whileTap={{ scale: 0.96 }}
+            onClick={onExplore}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 9, padding: '15px 32px', borderRadius: 16,
+              background: LEAF, color: '#fff', fontWeight: 800, fontSize: 16, border: 'none', cursor: 'pointer',
+              boxShadow: `0 8px 0 ${LEAF_D}, 0 14px 28px rgba(32,92,44,0.35)`,
+            }}
+          >
+            <Play size={16} fill="#fff" /> Explore Games
+          </motion.button>
+          <motion.button
+            whileHover={{ y: -3, scale: 1.03 }} whileTap={{ scale: 0.96 }}
+            onClick={() => navigate('/communities')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 9, padding: '15px 32px', borderRadius: 16,
+              background: '#fff', color: INK, fontWeight: 800, fontSize: 16, cursor: 'pointer',
+              border: `2px solid ${LEAF}33`, boxShadow: '0 8px 0 rgba(20,48,26,0.10), 0 14px 28px rgba(0,0,0,0.08)',
+            }}
+          >
+            <Users size={16} /> Join Community
+          </motion.button>
+        </motion.div>
+      </motion.div>
+
+      {/* scroll cue */}
+      <motion.button
+        onClick={onExplore}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+        style={{
+          position: 'absolute', bottom: 26, left: '50%', transform: 'translateX(-50%)', zIndex: 10,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+          color: LEAF_D, background: 'none', border: 'none', cursor: 'pointer',
+        }}
+      >
+        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+          Begin the adventure
+        </span>
+        <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 1.7 }}>
+          <ChevronDown size={20} />
+        </motion.div>
+      </motion.button>
     </section>
   );
 }
 
-/* ─── game data ───────────────────────────────────────────── */
-const GAMES = [
-  {
-    id:'canvas', Icon: Users,
-    label:'Draw Together',
-    bg:'#e6f5ec', iconColor:'#1a7a36', border:'#b0dcbc',
-    desc:'Up to 20 people on one infinite canvas. See every stroke in real time.',
-    route:'/draw', cta:'Create Room',
-  },
-  {
-    id:'guess', Icon: HelpCircle,
-    label:'Guess the Drawing',
-    bg:'#ede8ff', iconColor:'#6d28d9', border:'#c4b5fd',
-    desc:'One draws, everyone guesses. First to get it wins the round.',
-    route:'/games', cta:'Play Now',
-  },
-  {
-    id:'battle', Icon: Swords,
-    label:'Draw Battle',
-    bg:'#fff0f0', iconColor:'#c8002a', border:'#fca5a5',
-    desc:'Same prompt for everyone — the crowd votes for the best drawing.',
-    route:'/games', cta:'Start Battle',
-  },
-  {
-    id:'world', Icon: Globe,
-    label:'World Canvas',
-    bg:'#e8f2ff', iconColor:'#1d5fcc', border:'#93c5fd',
-    desc:'One shared canvas that never ends. Leave your mark permanently.',
-    route:'/world', cta:'Explore',
-  },
-  {
-    id:'scribble', Icon: Pencil,
-    label:'Quick Draw',
-    bg:'#fffbe8', iconColor:'#b45309', border:'#fcd34d',
-    desc:'Jump straight into a solo doodle session. No room, no rules.',
-    route:'/draw', cta:'Start Doodling',
-  },
+/* ════════════════════════════════════════════════════════════
+   INTERACTIVE WORLD — meet the robot artist
+   ════════════════════════════════════════════════════════════ */
+function InteractiveWorld() {
+  return (
+    <section style={{ background: PAGE, padding: '110px 28px', position: 'relative', overflow: 'hidden' }}>
+      <div aria-hidden style={{ position: 'absolute', top: '20%', left: '-6%', width: 280, height: 280, borderRadius: '50%', background: `radial-gradient(circle, ${SKY}44, transparent 65%)` }} />
+      <div style={{ maxWidth: 980, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: LEAF, margin: '0 0 14px' }}
+        >
+          A living world
+        </motion.p>
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.05 }}
+          style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(2rem, 4.5vw, 3.4rem)', color: INK, margin: '0 0 18px', lineHeight: 1.08 }}
+        >
+          Meet your robot artist
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
+          style={{ fontSize: 17, color: BROWN, lineHeight: 1.7, maxWidth: 520, margin: '0 auto 44px' }}
+        >
+          He strolls through the clearing, paints little masterpieces, and waves when you say hello. Tap him in the scene above to see what happens!
+        </motion.p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, maxWidth: 760, margin: '0 auto' }}>
+          {[
+            { icon: Heart, c: '#ff6b8a', t: 'He waves hello', d: 'Reacts to your cursor and clicks' },
+            { icon: Palette, c: LEAF, t: 'He paints', d: 'Splashes of colour on his easel' },
+            { icon: Sparkles, c: SUN, t: 'Holi bursts', d: 'Festival colour clouds fly out' },
+          ].map((f, i) => (
+            <motion.div
+              key={f.t}
+              initial={{ opacity: 0, y: 26 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+              whileHover={{ y: -6 }}
+              style={{ background: '#fff', borderRadius: 22, padding: '26px 20px', border: `1.5px solid ${LEAF}1f`, boxShadow: '0 8px 24px rgba(20,48,26,0.06)' }}
+            >
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: `${f.c}1f`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                <f.icon size={26} style={{ color: f.c }} />
+              </div>
+              <p style={{ fontWeight: 800, color: INK, margin: '0 0 4px', fontSize: 16 }}>{f.t}</p>
+              <p style={{ color: BROWN, margin: 0, fontSize: 13.5, lineHeight: 1.5 }}>{f.d}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   FEATURES — expandable 3D-ish icons
+   ════════════════════════════════════════════════════════════ */
+const FEATURES = [
+  { id: 'draw', icon: Pencil, c: LEAF, t: 'Drawing', d: 'A boundless canvas that follows your imagination, anywhere you scroll.' },
+  { id: 'multi', icon: Users, c: SKY, t: 'Multiplayer', d: 'Draw side by side with friends in real time — every stroke appears instantly.' },
+  { id: 'compete', icon: Trophy, c: SUN, t: 'Competition', d: 'Battle on the same prompt and let the crowd vote for the winner.' },
+  { id: 'create', icon: Palette, c: '#ff6b8a', t: 'Creativity', d: 'Brushes, colours and tools made for big ideas and tiny doodles alike.' },
+  { id: 'community', icon: Heart, c: '#9b5de5', t: 'Community', d: 'A friendly place to share, cheer each other on, and grow together.' },
 ];
 
-/* ─── single game card ────────────────────────────────────── */
+function FeatureIcon({ f, open, onToggle }: { f: typeof FEATURES[0]; open: boolean; onToggle: () => void }) {
+  return (
+    <motion.button
+      onClick={onToggle}
+      initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+      whileHover={{ y: -8, rotateX: 8, rotateY: -8 }}
+      whileTap={{ scale: 0.96 }}
+      style={{
+        flex: open ? '1 1 100%' : '1 1 150px', minWidth: 140, maxWidth: open ? 520 : 200,
+        background: '#fff', border: `1.5px solid ${open ? f.c : `${f.c}33`}`, borderRadius: 24,
+        padding: '24px 18px', cursor: 'pointer', textAlign: 'center', transformStyle: 'preserve-3d', perspective: 600,
+        boxShadow: open ? `0 16px 40px ${f.c}33` : '0 6px 18px rgba(20,48,26,0.06)', transition: 'flex 0.3s, max-width 0.3s',
+      }}
+    >
+      <motion.div
+        animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
+        style={{
+          width: 72, height: 72, margin: '0 auto 14px', borderRadius: 20,
+          background: `linear-gradient(145deg, ${f.c}, ${f.c}bb)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: `0 10px 22px ${f.c}55, inset 0 2px 0 rgba(255,255,255,0.4)`,
+        }}
+      >
+        <f.icon size={34} color="#fff" strokeWidth={2} />
+      </motion.div>
+      <p style={{ fontWeight: 800, color: INK, margin: 0, fontSize: 16 }}>{f.t}</p>
+      <AnimatePresence>
+        {open && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+            style={{ overflow: 'hidden', color: BROWN, fontSize: 14, lineHeight: 1.6, margin: '12px auto 0', maxWidth: 380 }}
+          >
+            {f.d}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  );
+}
+
+function Features() {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return (
+    <section style={{ background: `linear-gradient(180deg, ${PAGE}, ${CREAM})`, padding: '100px 28px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ maxWidth: 980, margin: '0 auto', textAlign: 'center' }}>
+        <motion.h2
+          initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(2rem, 4.5vw, 3.4rem)', color: INK, margin: '0 0 12px' }}
+        >
+          Everything to create
+        </motion.h2>
+        <p style={{ color: BROWN, fontSize: 16, margin: '0 auto 48px', maxWidth: 440 }}>
+          Tap an icon to peek inside. The rest you discover by playing.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center', alignItems: 'flex-start' }}>
+          {FEATURES.map(f => (
+            <FeatureIcon key={f.id} f={f} open={openId === f.id} onToggle={() => setOpenId(o => (o === f.id ? null : f.id))} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   COMMUNITY
+   ════════════════════════════════════════════════════════════ */
+function Community() {
+  const navigate = useNavigate();
+  return (
+    <section style={{ background: CREAM, padding: '100px 28px', position: 'relative', overflow: 'hidden' }}>
+      <div aria-hidden style={{ position: 'absolute', bottom: '-10%', right: '-6%', width: 320, height: 320, borderRadius: '50%', background: `radial-gradient(circle, ${SUN}55, transparent 65%)` }} />
+      <div style={{ maxWidth: 920, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+        <motion.div
+          initial={{ scale: 0, rotate: -20 }} whileInView={{ scale: 1, rotate: 0 }} viewport={{ once: true }}
+          style={{ width: 64, height: 64, borderRadius: 20, background: '#9b5de5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 10px 24px rgba(155,93,229,0.4)' }}
+        >
+          <MessageCircle size={30} color="#fff" />
+        </motion.div>
+        <motion.h2
+          initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(2rem, 4.5vw, 3.4rem)', color: INK, margin: '0 0 16px' }}
+        >
+          Better together
+        </motion.h2>
+        <p style={{ color: BROWN, fontSize: 17, lineHeight: 1.7, maxWidth: 520, margin: '0 auto 36px' }}>
+          Thousands of young creators share drawings, cheer each other on, and team up every day. Bring your friends — there's always room by the campfire.
+        </p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
+          {[
+            { v: '20+', l: 'Per room' },
+            { v: '< 50ms', l: 'Latency' },
+            { v: 'Free', l: 'To play' },
+            { v: '4.9★', l: 'Loved' },
+          ].map(s => (
+            <div key={s.l} style={{ background: '#fff', borderRadius: 16, padding: '14px 22px', border: `1.5px solid ${LEAF}1f`, boxShadow: '0 4px 14px rgba(20,48,26,0.05)' }}>
+              <p style={{ fontFamily: 'var(--font-display)', fontWeight: 900, color: LEAF, fontSize: 22, margin: 0 }}>{s.v}</p>
+              <p style={{ color: BROWN, fontSize: 12, margin: 0 }}>{s.l}</p>
+            </div>
+          ))}
+        </div>
+        <motion.button
+          whileHover={{ y: -3, scale: 1.03 }} whileTap={{ scale: 0.96 }}
+          onClick={() => navigate('/communities')}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 9, padding: '15px 32px', borderRadius: 16,
+            background: '#9b5de5', color: '#fff', fontWeight: 800, fontSize: 16, border: 'none', cursor: 'pointer',
+            boxShadow: '0 8px 0 #7d3fd0, 0 14px 28px rgba(155,93,229,0.35)',
+          }}
+        >
+          <Heart size={16} fill="#fff" /> Join the Community
+        </motion.button>
+      </div>
+    </section>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   GAMES DISCOVERY
+   ════════════════════════════════════════════════════════════ */
+const GAMES = [
+  { id: 'canvas', Icon: Users, label: 'Drawing Board', c: LEAF, desc: 'Up to 20 friends on one infinite canvas, live.', route: '/draw', cta: 'Create Room' },
+  { id: 'scribble', Icon: HelpCircle, label: 'Scribble Game', c: SKY, desc: 'One draws, everyone guesses. Fastest wins!', route: '/games', cta: 'Play Now' },
+  { id: 'sandbox', Icon: Palette, label: 'Creative Sandbox', c: SUN, desc: 'A free space to doodle with no rules at all.', route: '/draw', cta: 'Start Doodling' },
+  { id: 'challenge', Icon: Swords, label: 'Community Challenges', c: '#ff6b8a', desc: 'Themed prompts the whole forest votes on.', route: '/games', cta: 'Join Challenge' },
+];
+
 function GameCard({ g, delay }: { g: typeof GAMES[0]; delay: number }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const Icon = g.Icon;
-
   return (
     <motion.article
-      initial={{ opacity:0, y:36 }}
-      whileInView={{ opacity:1, y:0 }}
-      viewport={{ once:true, margin:'-40px' }}
-      transition={{ duration:0.5, delay, ease:[0.22,1,0.36,1] }}
+      initial={{ opacity: 0, y: 36 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
       onClick={() => setOpen(v => !v)}
-      whileHover={{ y:-8, transition:{ duration:0.22 } }}
+      whileHover={{ y: -10, rotate: open ? 0 : -1 }}
       style={{
-        background: g.bg,
-        border:`1.5px solid ${open ? g.iconColor : g.border}`,
-        borderRadius:24,
-        overflow:'hidden',
-        cursor:'pointer',
-        boxShadow: open ? '0 12px 40px rgba(0,0,0,0.12)' : '0 2px 12px rgba(0,0,0,0.06)',
-        userSelect:'none',
+        background: '#fff', border: `1.5px solid ${open ? g.c : `${g.c}33`}`, borderRadius: 26, overflow: 'hidden',
+        cursor: 'pointer', userSelect: 'none',
+        boxShadow: open ? `0 18px 44px ${g.c}33` : '0 6px 20px rgba(20,48,26,0.07)',
       }}
     >
-      {/* card face */}
-      <div style={{ padding:'32px 24px 22px', display:'flex', flexDirection:'column', alignItems:'center', gap:14, textAlign:'center' }}>
-        {/* icon box */}
-        <div style={{
-          width:76, height:76, borderRadius:20,
-          background:'rgba(255,255,255,0.75)',
-          border:`1.5px solid ${g.border}`,
-          display:'flex', alignItems:'center', justifyContent:'center',
-        }}>
-          <Icon size={34} style={{ color: g.iconColor }} strokeWidth={1.6}/>
-        </div>
-
-        {/* label badge */}
-        <span style={{
-          fontSize:10, fontWeight:800, letterSpacing:'0.16em', textTransform:'uppercase',
-          color: g.iconColor,
-          background:'rgba(255,255,255,0.6)',
-          border:`1px solid ${g.border}`,
-          borderRadius:99, padding:'4px 12px',
-        }}>
-          {g.label}
-        </span>
-
-        {/* hint */}
-        <span style={{ fontSize:11, color: open ? g.iconColor : SAGE, fontWeight:600, opacity:0.75 }}>
-          {open ? '▲ tap to close' : '▼ tap to reveal'}
+      <div style={{ height: 5, background: g.c }} />
+      <div style={{ padding: '28px 22px 18px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center' }}>
+        <motion.div
+          animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 2.6, delay }}
+          style={{ width: 76, height: 76, borderRadius: 22, background: `linear-gradient(145deg, ${g.c}, ${g.c}cc)`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 12px 24px ${g.c}55, inset 0 2px 0 rgba(255,255,255,0.4)` }}
+        >
+          <Icon size={36} color="#fff" strokeWidth={1.8} />
+        </motion.div>
+        <p style={{ fontFamily: 'var(--font-display)', fontWeight: 900, color: INK, fontSize: 18, margin: 0 }}>{g.label}</p>
+        <span style={{ fontSize: 11, color: g.c, fontWeight: 700, opacity: 0.85 }}>
+          {open ? '▲ close' : '▼ tap to reveal'}
         </span>
       </div>
-
-      {/* expandable description */}
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div
-            key="body"
-            initial={{ height:0 }}
-            animate={{ height:'auto' }}
-            exit={{ height:0 }}
-            transition={{ duration:0.26, ease:'easeInOut' }}
-            style={{ overflow:'hidden' }}
-          >
-            <div style={{ padding:'4px 24px 24px', display:'flex', flexDirection:'column', gap:14 }}>
-              <p style={{ fontSize:14, color: SAGE, lineHeight:1.65, textAlign:'center', margin:0 }}>
-                {g.desc}
-              </p>
-              <button
+          <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} transition={{ duration: 0.26 }} style={{ overflow: 'hidden' }}>
+            <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <p style={{ fontSize: 14, color: BROWN, lineHeight: 1.6, margin: 0 }}>{g.desc}</p>
+              <motion.button
+                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                 onClick={e => { e.stopPropagation(); navigate(g.route); }}
-                style={{
-                  display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-                  padding:'10px 20px', borderRadius:12,
-                  background: g.iconColor, color:'#fff',
-                  fontWeight:700, fontSize:13, border:'none', cursor:'pointer', width:'100%',
-                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 20px', borderRadius: 13, background: g.c, color: '#fff', fontWeight: 800, fontSize: 13.5, border: 'none', cursor: 'pointer', width: '100%' }}
               >
-                <Play size={12} fill="#fff"/> {g.cta}
-              </button>
+                <Play size={13} fill="#fff" /> {g.cta}
+              </motion.button>
             </div>
           </motion.div>
         )}
@@ -365,182 +384,69 @@ function GameCard({ g, delay }: { g: typeof GAMES[0]; delay: number }) {
   );
 }
 
-/* ─── games section ────────────────────────────────────────── */
 const GamesSection = forwardRef<HTMLElement>((_, ref) => (
-  <section
-    ref={ref}
-    style={{ background:'#ffffff', padding:'96px 40px 80px', position:'relative', overflow:'hidden' }}
-  >
-    {/* color accents */}
-    <div aria-hidden style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
-      <div style={{ position:'absolute', top:-60, left:-60, width:280, height:280, borderRadius:'50%', background:blob('247,37,133',0.10) }}/>
-      <div style={{ position:'absolute', top:'30%', right:-70, width:300, height:300, borderRadius:'50%', background:blob('58,134,255',0.10) }}/>
-      <div style={{ position:'absolute', bottom:-80, left:'30%', width:320, height:320, borderRadius:'50%', background:blob('240,185,74',0.10) }}/>
-    </div>
-    <div style={{ maxWidth:1100, margin:'0 auto', position:'relative', zIndex:1 }}>
-      {/* heading */}
+  <section ref={ref} style={{ background: `linear-gradient(180deg, ${CREAM}, ${PAGE})`, padding: '100px 28px', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ maxWidth: 1040, margin: '0 auto', position: 'relative' }}>
       <motion.div
-        initial={{ opacity:0, y:24 }}
-        whileInView={{ opacity:1, y:0 }}
-        viewport={{ once:true }}
-        transition={{ duration:0.55 }}
-        style={{ textAlign:'center', marginBottom:56 }}
+        initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        style={{ textAlign: 'center', marginBottom: 52 }}
       >
-        <p style={{
-          fontSize:11, fontWeight:800, letterSpacing:'0.18em', textTransform:'uppercase',
-          color:'#1a7a36', margin:'0 0 14px',
-        }}>
-          What's Inside
+        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: LEAF, margin: '0 0 14px' }}>
+          <Star size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: -1 }} /> Discover the games
         </p>
-        <h2 style={{
-          fontFamily:'var(--font-display)',
-          fontSize:'clamp(2rem, 4vw, 3.2rem)',
-          fontWeight:900, color: INK, margin:0, lineHeight:1.1,
-        }}>
-          Choose Your Game
+        <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(2rem, 4.5vw, 3.4rem)', color: INK, margin: 0, lineHeight: 1.08 }}>
+          Pick your adventure
         </h2>
-        <p style={{ fontSize:15, color: SAGE, margin:'14px auto 0', maxWidth:420 }}>
-          Tap a card to see what it's about.
+        <p style={{ fontSize: 16, color: BROWN, margin: '14px auto 0', maxWidth: 420 }}>
+          Tap a card to see what's inside, then jump right in.
         </p>
       </motion.div>
-
-      {/* card grid */}
-      <div style={{
-        display:'grid',
-        gridTemplateColumns:'repeat(auto-fit, minmax(190px, 1fr))',
-        gap:22,
-      }}>
-        {GAMES.map((g, i) => <GameCard key={g.id} g={g} delay={i * 0.07}/>)}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 22 }}>
+        {GAMES.map((g, i) => <GameCard key={g.id} g={g} delay={i * 0.07} />)}
       </div>
     </div>
   </section>
 ));
 GamesSection.displayName = 'GamesSection';
 
-/* ─── features row ─────────────────────────────────────────── */
-function Features() {
-  const rows = [
-    { accent:'#f72585', title:'Real-time Strokes',  body:'Under 50ms latency worldwide'    },
-    { accent:'#3a86ff', title:'AI Creative Agents', body:'6 specialized AI drawing tools'  },
-    { accent:'#06d6a0', title:'Infinite Canvas',    body:'Pan and zoom with no limits'      },
-    { accent:'#ffbe0b', title:'Auto-Save to Cloud', body:'Your work is always safe'         },
-  ];
-  return (
-    <section style={{ background: PAGE, padding:'64px 40px', position:'relative', overflow:'hidden' }}>
-      <div aria-hidden style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
-        <div style={{ position:'absolute', top:'10%', left:-70, width:260, height:260, borderRadius:'50%', background:blob('6,214,160',0.14) }}/>
-        <div style={{ position:'absolute', bottom:-60, right:-50, width:280, height:280, borderRadius:'50%', background:blob('251,86,7',0.12) }}/>
-      </div>
-      <div style={{
-        maxWidth:1100, margin:'0 auto', position:'relative', zIndex:1,
-        display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(210px,1fr))', gap:18,
-      }}>
-        {rows.map((r, i) => (
-          <motion.div
-            key={r.title}
-            initial={{ opacity:0, y:18 }} whileInView={{ opacity:1, y:0 }}
-            viewport={{ once:true }} transition={{ delay: i*0.08, duration:0.45 }}
-            style={{
-              background:'#fff', borderRadius:16, padding:'22px 20px',
-              borderLeftWidth:4, borderLeftStyle:'solid', borderLeftColor: r.accent,
-              boxShadow:'0 2px 10px rgba(0,0,0,0.05)',
-            }}
-          >
-            <p style={{ fontSize:15, fontWeight:800, color: INK, margin:'0 0 6px' }}>{r.title}</p>
-            <p style={{ fontSize:13, color: SAGE, margin:0 }}>{r.body}</p>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ─── CTA banner ────────────────────────────────────────────── */
-function CTABanner() {
+/* ── Footer ──────────────────────────────────────────────────── */
+function Footer() {
   const navigate = useNavigate();
   return (
-    <section style={{
-      background:'linear-gradient(135deg, #edf7ee 0%, #d4edda 100%)',
-      padding:'80px 40px', textAlign:'center',
-      borderTop:'1px solid rgba(26,122,54,0.12)',
-    }}>
-      <motion.div
-        initial={{ opacity:0, y:22 }} whileInView={{ opacity:1, y:0 }}
-        viewport={{ once:true }} transition={{ duration:0.55 }}
-        style={{ maxWidth:540, margin:'0 auto' }}
+    <footer style={{ background: INK, color: CREAM, padding: '64px 28px 40px', textAlign: 'center' }}>
+      <p style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 28, margin: '0 0 10px' }}>
+        Point Club
+      </p>
+      <p style={{ color: '#a9c9ad', fontSize: 15, margin: '0 0 28px', maxWidth: 380, marginInline: 'auto', lineHeight: 1.6 }}>
+        A creative forest playground where every visit becomes an adventure.
+      </p>
+      <motion.button
+        whileHover={{ y: -2, scale: 1.03 }} whileTap={{ scale: 0.96 }}
+        onClick={() => navigate('/draw')}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 28px', borderRadius: 14, background: SUN, color: INK, fontWeight: 800, fontSize: 15, border: 'none', cursor: 'pointer', marginBottom: 32 }}
       >
-        <h2 style={{
-          fontFamily:'var(--font-display)',
-          fontSize:'clamp(1.9rem, 4vw, 3rem)',
-          fontWeight:900, color: INK, margin:'0 0 14px',
-        }}>
-          Ready to start playing?
-        </h2>
-        <p style={{ fontSize:16, color: SAGE, margin:'0 0 36px' }}>
-          Free forever. No account needed to jump in.
-        </p>
-        <div style={{ display:'flex', gap:14, justifyContent:'center', flexWrap:'wrap' }}>
-          <button
-            onClick={() => navigate('/draw')}
-            style={{
-              display:'flex', alignItems:'center', gap:8,
-              padding:'13px 30px', borderRadius:14,
-              background:'#1a7a36', color:'#fff',
-              fontWeight:800, fontSize:15,
-              boxShadow:'0 4px 18px rgba(26,122,54,0.28)',
-              border:'none', cursor:'pointer',
-            }}
-          >
-            <Pencil size={16}/> Start Drawing Free
-          </button>
-          <button
-            onClick={() => navigate('/games')}
-            style={{
-              display:'flex', alignItems:'center', gap:8,
-              padding:'13px 30px', borderRadius:14,
-              background:'#fff', color: INK,
-              fontWeight:700, fontSize:15,
-              border:'1.5px solid rgba(17,28,14,0.18)',
-              cursor:'pointer',
-            }}
-          >
-            Browse Games <ArrowRight size={15}/>
-          </button>
-        </div>
-      </motion.div>
-    </section>
-  );
-}
-
-/* ─── footer ─────────────────────────────────────────────── */
-function Footer() {
-  return (
-    <footer style={{
-      background:'#fff', borderTop:'1px solid rgba(0,0,0,0.07)',
-      padding:'22px 40px', textAlign:'center',
-      fontSize:13, color: SAGE,
-    }}>
-      <span style={{ fontFamily:'var(--font-display)', fontWeight:800, color: INK }}>Point Club</span>
-      {' · '}Built for creators everywhere
+        <Pencil size={15} /> Start Creating Free
+      </motion.button>
+      <p style={{ color: '#6e8c72', fontSize: 12, margin: 0 }}>
+        © {new Date().getFullYear()} Point Club · Built for creators everywhere
+      </p>
     </footer>
   );
 }
 
-/* ─── MAIN ───────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════ */
 export default function Home() {
   const gamesRef = useRef<HTMLElement>(null);
-
   return (
-    <div style={{ background: PAGE }}>
-      {/* 3D Holi color splash that bursts as you scroll */}
+    <div style={{ background: PAGE, color: CHAR }}>
       <Suspense fallback={null}>
         <ScrollHoli />
       </Suspense>
-
-      <Hero onScrollToGames={() => gamesRef.current?.scrollIntoView({ behavior:'smooth' })} />
-      <GamesSection ref={gamesRef} />
+      <Hero onExplore={() => gamesRef.current?.scrollIntoView({ behavior: 'smooth' })} />
+      <InteractiveWorld />
       <Features />
-      <CTABanner />
+      <Community />
+      <GamesSection ref={gamesRef} />
       <Footer />
     </div>
   );
