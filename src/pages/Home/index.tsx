@@ -7,8 +7,8 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 
-const ForestScene = lazy(() => import('./ForestScene'));
-const ScrollHoli  = lazy(() => import('./ScrollHoli'));
+const CopperGolemScene = lazy(() => import('./copper/CopperGolemScene'));
+const ScrollHoli       = lazy(() => import('./ScrollHoli'));
 
 /* ── Forest tokens ───────────────────────────────────────────── */
 const INK    = '#14301a';   // dark green text
@@ -45,10 +45,10 @@ function Hero({ onExplore }: { onExplore: () => void }) {
         background: `radial-gradient(circle, ${SUN}88 0%, transparent 65%)`, pointerEvents: 'none', filter: 'blur(8px)',
       }} />
 
-      {/* the living forest fills the whole screen */}
+      {/* the living Copper Golem art studio fills the whole screen */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
         <Suspense fallback={<div style={{ width: '100%', height: '100%' }} />}>
-          <ForestScene />
+          <CopperGolemScene />
         </Suspense>
       </div>
 
