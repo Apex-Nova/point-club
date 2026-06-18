@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import CameraRig from './CameraRig';
 import LightingSystem from './LightingSystem';
 import ForestEnvironment from './ForestEnvironment';
@@ -6,6 +7,7 @@ import CanvasWorkshop from './CanvasWorkshop';
 import AtmosphereSystem from './AtmosphereSystem';
 import ParticleSystem from './ParticleSystem';
 import WindUpdater from './WindUpdater';
+import CopperGolem from './characters/CopperGolem';
 
 /**
  * The complete world graph (Phase 1). The Copper Golem is intentionally absent —
@@ -31,6 +33,11 @@ export default function WorldRoot({ lowPerf = false }: { lowPerf?: boolean }) {
       <ForestEnvironment lowPerf={lowPerf} />
       <HeroTree />
       <CanvasWorkshop />
+
+      {/* The living resident — loads independently so the world shows first. */}
+      <Suspense fallback={null}>
+        <CopperGolem />
+      </Suspense>
 
       <AtmosphereSystem lowPerf={lowPerf} />
       <ParticleSystem lowPerf={lowPerf} />

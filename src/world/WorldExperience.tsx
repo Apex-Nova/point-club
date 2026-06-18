@@ -4,8 +4,10 @@ import { Loader, AdaptiveDpr, AdaptiveEvents, Preload } from '@react-three/drei'
 import * as THREE from 'three';
 import WorldRoot from './scene/WorldRoot';
 import DebugPanel from './debug/DebugPanel';
+import ScreenStain from './character/ScreenStain';
 import { useScrollTimeline } from './timeline/useScrollTimeline';
 import { preloadWorldAssets } from './loaders/preload';
+import { triggerScreenStain } from './character/fourthWall';
 
 preloadWorldAssets();
 
@@ -23,8 +25,13 @@ export default function WorldExperience() {
 
   return (
     <>
-      {/* Fixed 3D world */}
-      <div className="fixed inset-0" style={{ background: '#f0e3c4' }}>
+      {/* Fixed 3D world. Clicking the scene can trigger the golem's screen-stain
+          set-piece (the signature fourth-wall interaction). */}
+      <div
+        className="fixed inset-0"
+        style={{ background: '#f0e3c4' }}
+        onPointerDown={e => triggerScreenStain(e.clientX, e.clientY)}
+      >
         <Canvas
           shadows
           dpr={[1, lowPerf ? 1.5 : 2]}
@@ -46,6 +53,9 @@ export default function WorldExperience() {
       {/* Tall spacer gives the page its scroll length. Pointer-events off so the
           canvas still receives parallax pointer moves. */}
       <div style={{ height: '400vh', position: 'relative', pointerEvents: 'none' }} />
+
+      {/* Paint stain on the camera layer (above the canvas, below dev UI). */}
+      <ScreenStain />
 
       {/* Loading screen + dev controls */}
       <Loader

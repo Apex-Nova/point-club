@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { PROPS } from '../config/assets';
 import { WORLD } from '../config/worldConfig';
 import PropModel from './workshop/PropModel';
+import { getArtworkTexture } from '../character/canvasArtwork';
 
 /**
  * The Copper Golem's workspace — present and "occupied" even though the artist
@@ -47,6 +48,17 @@ function Platform() {
   );
 }
 
+/** The painted surface — its texture is the golem's evolving artwork. */
+function CanvasSurface() {
+  const map = useMemo(() => getArtworkTexture(), []);
+  return (
+    <mesh name="CanvasBoard" position={[0, 0, 0.06]}>
+      <planeGeometry args={[2.74, 2.04]} />
+      <meshStandardMaterial map={map} roughness={0.95} emissive="#2a2418" emissiveIntensity={0.04} />
+    </mesh>
+  );
+}
+
 /** Wooden A-frame easel holding the giant blank canvas (future paint target). */
 function Easel() {
   const wood = useMemo(
@@ -75,10 +87,7 @@ function Easel() {
           <boxGeometry args={[3.0, 2.3, 0.1]} />
           <meshStandardMaterial color="#5b3d22" roughness={0.6} />
         </mesh>
-        <mesh name="CanvasBoard" position={[0, 0, 0.06]}>
-          <planeGeometry args={[2.74, 2.04]} />
-          <meshStandardMaterial color="#f6f1e4" roughness={0.95} emissive="#2a2418" emissiveIntensity={0.05} />
-        </mesh>
+        <CanvasSurface />
       </group>
     </group>
   );
