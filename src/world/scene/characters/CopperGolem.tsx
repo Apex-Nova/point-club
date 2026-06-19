@@ -76,9 +76,10 @@ export default function CopperGolem() {
 
     const g = outer.current;
     if (g) {
-      const { position, yaw, lean, bob, squash, wiggle, scale } = controller.pose;
+      const { position, yaw, lean, bob, squash, wiggle, roll, scale } = controller.pose;
       g.position.set(position.x, position.y + bob, position.z);
-      g.rotation.set(lean, yaw, wiggle);
+      // facingOffset aligns the imported model's forward axis with movement
+      g.rotation.set(lean + roll, yaw + GOLEM.facingOffset, wiggle);
       g.scale.set(scale * squash, scale * (2 - squash), scale * squash);
     }
     // brush swing — the painting hand

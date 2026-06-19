@@ -53,3 +53,8 @@ export const useGolemStore = create<GolemState>(set => ({
 }));
 
 export const golemState = () => useGolemStore.getState();
+
+// Dev-only: expose for live debugging in the preview console.
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (window as unknown as { __golem: typeof useGolemStore }).__golem = useGolemStore;
+}

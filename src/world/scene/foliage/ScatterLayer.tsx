@@ -11,6 +11,8 @@ interface Props {
   wind?: { strength: number; pivot: number } | false;
   castShadow?: boolean;
   receiveShadow?: boolean;
+  /** Optional per-instance colour tints (multiplied) for varied undergrowth. */
+  tints?: string[];
 }
 
 /**
@@ -19,7 +21,7 @@ interface Props {
  * references), so the wind patch on a shared material animates every instance.
  */
 export default function ScatterLayer({
-  models, placements, wind = false, castShadow = true, receiveShadow = false,
+  models, placements, wind = false, castShadow = true, receiveShadow = false, tints,
 }: Props) {
   const gltfs = useGLTF(models);
 
@@ -42,6 +44,18 @@ export default function ScatterLayer({
         const src = prepared[p.modelIndex % prepared.length];
         if (!src) return null;
         const clone = src.clone(true);
+        if (tints && tints.length) {
+          // tint this instance: clone its materials and multiply by a palette colour
+          const tint = new THREE.Color(tints[(p.modelIndex + i * 7) % tints.length]);
+          clone.traverse(o => {
+            const m = o as THREE.Mesh;
+            if (!m.isMesh) return;
+            const base = Array.isArray(m.material) ? m.material[0] : m.material;
+            const mat = (base as THREE.MeshStandardMaterial).clone();
+            mat.color = mat.color.clone().lerp(tint, 0.55);
+            m.material = mat;
+          });
+        }
         return (
           <primitive
             key={i}

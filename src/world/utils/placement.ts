@@ -1,4 +1,5 @@
 import { WORLD } from '../config/worldConfig';
+import { heightAt } from '../config/terrain';
 
 /** Deterministic PRNG (mulberry32) so the forest scatter is identical each load. */
 export function makeRng(seed: number) {
@@ -53,7 +54,7 @@ export function scatter(opts: ScatterOpts): Placed[] {
     const z = Math.sin(a) * r;
     if (avoid.some(c => Math.hypot(x - c.x, z - c.z) < c.r)) continue;
     out.push({
-      position: [x, 0, z],
+      position: [x, heightAt(x, z), z], // sit on the rolling terrain
       rotationY: rng() * Math.PI * 2,
       scale: minScale + rng() * (maxScale - minScale),
       modelIndex: Math.floor(rng() * models),

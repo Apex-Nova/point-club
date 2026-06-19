@@ -4,6 +4,8 @@ import LightingSystem from './LightingSystem';
 import ForestEnvironment from './ForestEnvironment';
 import HeroTree from './HeroTree';
 import CanvasWorkshop from './CanvasWorkshop';
+import WaterFeature from './WaterFeature';
+import Fauna from './Fauna';
 import AtmosphereSystem from './AtmosphereSystem';
 import ParticleSystem from './ParticleSystem';
 import WindUpdater from './WindUpdater';
@@ -33,6 +35,14 @@ export default function WorldRoot({ lowPerf = false }: { lowPerf?: boolean }) {
       <ForestEnvironment lowPerf={lowPerf} />
       <HeroTree />
       <CanvasWorkshop />
+
+      {/* Pond + waterfall and the wildlife load independently of the core world. */}
+      <Suspense fallback={null}>
+        <WaterFeature />
+      </Suspense>
+      <Suspense fallback={null}>
+        <Fauna lowPerf={lowPerf} />
+      </Suspense>
 
       {/* The living resident — loads independently so the world shows first. */}
       <Suspense fallback={null}>

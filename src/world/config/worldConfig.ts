@@ -12,14 +12,30 @@ export const WORLD = {
 
   /** Foliage population (auto-scaled down on mobile in placement). */
   counts: {
-    trees: 26,
-    bushes: 18,
-    flowers: 40,
-    rocks: 22,
-    pebbles: 30,
-    mushrooms: 14,
-    ferns: 16,
-    grass: 4200, // instanced
+    trees: 46,
+    bgTrees: 60,      // dense background ring for depth
+    bushes: 46,
+    undergrowth: 220, // dense leafy floor cover (the lush jungle look)
+    flowers: 160,     // colourful flower patches
+    rocks: 38,
+    pebbles: 60,
+    mushrooms: 30,
+    ferns: 44,
+    grass: 14000,     // instanced, layered species
+  },
+
+  /** Pond + waterfall feature (terrain is carved/raised to suit). Placed
+   *  front-left of the workshop so it sits naturally in the camera framing. */
+  pond: {
+    center: [-8, 0, 7] as [number, number, number],
+    radius: 4.6,
+    depth: 1.1,        // basin depth below platform level
+    waterY: -0.35,     // water surface height
+  },
+  waterfall: {
+    position: [-14, 0, 11.5] as [number, number, number],
+    scale: 5,
+    rotationY: 2.4,    // face the falls toward the pond/camera
   },
 
   /** Clear radius around the workshop so props are never buried in foliage. */
@@ -29,8 +45,8 @@ export const WORLD = {
 
   /** Hero landmark tree placement. */
   heroTree: {
-    position: [-9, 0, -6] as [number, number, number],
-    scale: 3.4,
+    position: [-10, 0, -7] as [number, number, number],
+    scale: 4.6,
   },
 
   /** Holi powder palette — tinted in-shader from white sprites. */

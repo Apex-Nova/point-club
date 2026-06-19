@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { golemState, useGolemStore, type GolemTask, type GolemMood } from '../state/golemStore';
 import { nextTask, type TaskPlan } from './brain';
-import { STATIONS, CANVAS_FOCUS, GOLEM } from './golemConfig';
+import { STATIONS, CANVAS_FOCUS, OBSTACLES, GOLEM } from './golemConfig';
+import { groundHeightAt } from '../config/terrain';
 import { CursorTracker } from './cursor';
 import { paintNext, artworkProgress, artworkComplete } from './canvasArtwork';
 import { damp, dampAngle, headingTo, pulse } from './animation';
@@ -10,96 +11,88 @@ import { damp, dampAngle, headingTo, pulse } from './animation';
 export interface GolemPose {
   position: THREE.Vector3;
   yaw: number;
-  /** forward lean (rad). */
-  lean: number;
-  /** extra vertical bob. */
-  bob: number;
-  /** uniform squash/stretch (1 = rest). */
-  squash: number;
-  /** brush swing phase scalar (-1..1) for the painting hand. */
-  brushSwing: number;
-  /** sideways body wiggle (rad) — tickle/annoyance. */
-  wiggle: number;
-  /** scale multiplier (grows during the fourth-wall emerge). */
-  scale: number;
+  lean: number;       // forward lean (rad)
+  bob: number;        // extra vertical bob
+  squash: number;     // uniform squash/stretch (1 = rest)
+  brushSwing: number; // painting hand phase (-1..1)
+  wiggle: number;     // sideways body wiggle (rad)
+  roll: number;       // full-body roll (acrobatics)
+  scale: number;      // scale multiplier (fourth-wall emerge)
 }
 
 type Phase = 'travel' | 'work';
 
-/**
- * Drives the Copper Golem: a goal-based loop (travel → work) with procedural,
- * weighted animation, cursor awareness, and the scripted fourth-wall sequence.
- * Authoritative on position/yaw; the component reads `pose` and applies it.
- */
+/** A transient one-shot animation (flip, bow, toss…) that overrides gestures. */
+interface Special {
+  t: number;
+  dur: number;
+  apply: (p: GolemPose, k: number) => void;  // k = 0..1 progress
+  done?: () => void;
+}
+
 export class GolemController {
   readonly pose: GolemPose = {
     position: STATIONS.easel.clone(),
-    yaw: 0, lean: 0, bob: 0, squash: 1, brushSwing: 0, wiggle: 0, scale: 1,
+    yaw: 0, lean: 0, bob: 0, squash: 1, brushSwing: 0, wiggle: 0, roll: 0, scale: 1,
   };
-
   readonly cursor = new CursorTracker();
 
   private plan: TaskPlan = { task: 'idle', station: 'stool', duration: [4, 6] };
   private phase: Phase = 'work';
   private timer = 2;
   private target = STATIONS.easel.clone();
-  private lookTarget = CANVAS_FOCUS.clone();
   private paintAccum = 0;
   private gestureT = 0;
-  // cursor-attention bookkeeping
-  private noticeCd = 0;       // cooldown before it can glance at cursor again
-  private noticing = 0;       // time left actively watching the cursor
-  private followCd = 8;       // min seconds before another follow event
-  private rareCd = 14;        // rare personality events
-  // fourth-wall
-  private fwActive = false;
-  private fwPos = new THREE.Vector3();
-  private camPos = new THREE.Vector3();
+  private noticeCd = 0;
+  private noticing = 0;
+  private followCd = 10;
+  private rareCd = 12;
+  private special: Special | null = null;
 
   private set = useGolemStore.getState().set;
   private tmp = new THREE.Vector3();
+  private camPos = new THREE.Vector3();
 
-  /** Called every frame by the component. */
   update(dt: number, camera: THREE.Camera, pointer: THREE.Vector2) {
     dt = Math.min(dt, 0.05);
     this.cursor.update(pointer, camera, dt);
     const s = golemState();
 
-    // The scripted set-piece overrides the normal loop while active.
     if (s.fourthWall !== 'none') { this.updateFourthWall(dt, camera, s.fourthWall); return; }
-    this.fwActive = false;
     this.pose.scale = damp(this.pose.scale, 1, 6, dt);
+    this.pose.roll = damp(this.pose.roll, 0, 8, dt);
 
-    this.updateCursorAttention(dt, s.distraction);
-    this.updateLoop(dt);
-    this.updateRareEvents(dt);
+    // one-shot special actions take priority over the task gesture
+    if (this.special) { this.runSpecial(dt); }
+    else {
+      this.updateCursorAttention(dt, s.distraction);
+      this.updateLoop(dt);
+      this.updateRareEvents(dt);
+    }
+
+    this.resolveObstacles();
+    this.pose.position.y = groundHeightAt(this.pose.position.x, this.pose.position.z);
   }
 
   // ── goal loop ──────────────────────────────────────────────────────
   private updateLoop(dt: number) {
     this.timer -= dt;
-
     if (this.phase === 'travel') {
       const arrived = this.moveToward(this.target, dt);
-      // face travel direction
-      this.tmp.copy(this.target).sub(this.pose.position);
-      if (this.tmp.lengthSq() > 0.01) this.faceYaw(headingTo(this.pose.position, this.target), dt, 9);
-      this.pose.lean = damp(this.pose.lean, 0.05, 6, dt);
+      if (this.tmp.set(this.target.x - this.pose.position.x, 0, this.target.z - this.pose.position.z).lengthSq() > 0.02)
+        this.faceYaw(headingTo(this.pose.position, this.target), dt, 10);
+      this.pose.lean = damp(this.pose.lean, 0.04, 6, dt);
       this.pose.brushSwing = damp(this.pose.brushSwing, 0, 8, dt);
       if (arrived) { this.phase = 'work'; this.gestureT = 0; this.timer = this.pickDuration(); }
       return;
     }
-
-    // WORK — perform the current task's gesture
     this.gestureT += dt;
     this.performTask(this.plan.task, dt);
-
     if (this.timer <= 0) this.chooseNext();
   }
 
   private chooseNext() {
-    const prog = artworkProgress();
-    this.plan = nextTask(this.plan.task, prog);
+    this.plan = nextTask(this.plan.task, artworkProgress());
     this.target.copy(STATIONS[this.plan.station]);
     this.phase = 'travel';
     this.set({ task: this.plan.task, mood: this.moodFor(this.plan.task) });
@@ -110,31 +103,28 @@ export class GolemController {
       case 'paint': {
         this.faceLook(CANVAS_FOCUS, dt);
         this.pose.lean = damp(this.pose.lean, 0.22, 5, dt);
-        // rhythmic, deliberate strokes (not endless): swing + periodic commit
-        this.pose.brushSwing = Math.sin(this.gestureT * 5) * 0.8;
-        this.pose.bob = Math.sin(this.gestureT * 5) * 0.03;
+        this.pose.brushSwing = Math.sin(this.gestureT * 4.5) * 0.8;
+        this.pose.bob = damp(this.pose.bob, Math.sin(this.gestureT * 4.5) * 0.02, 6, dt);
         this.paintAccum += dt;
-        if (this.paintAccum > 1.4 && !artworkComplete()) {
+        if (this.paintAccum > 1.6 && !artworkComplete()) {
           this.paintAccum = 0;
-          const p = paintNext(1);
-          this.set({ artProgress: p });
+          this.set({ artProgress: paintNext(1) });
         }
         break;
       }
       case 'inspect':
       case 'review': {
         this.faceLook(CANVAS_FOCUS, dt);
-        // lean in to examine, then squint/tilt
-        this.pose.lean = damp(this.pose.lean, 0.18 + Math.sin(this.gestureT * 1.2) * 0.06, 4, dt);
-        this.pose.wiggle = damp(this.pose.wiggle, Math.sin(this.gestureT * 0.8) * 0.08, 4, dt); // head tilt
+        this.pose.lean = damp(this.pose.lean, 0.18 + Math.sin(this.gestureT * 1.2) * 0.05, 4, dt);
+        this.pose.wiggle = damp(this.pose.wiggle, Math.sin(this.gestureT * 0.8) * 0.08, 4, dt);
         this.pose.brushSwing = damp(this.pose.brushSwing, 0, 6, dt);
+        this.pose.bob = damp(this.pose.bob, 0, 6, dt);
         break;
       }
       case 'measure': {
-        // walk left↔right comparing sections
-        const t = (Math.sin(this.gestureT * 0.9) + 1) / 2;
+        const t = (Math.sin(this.gestureT * 0.8) + 1) / 2;
         this.tmp.copy(STATIONS.canvasLeft).lerp(STATIONS.canvasRight, t);
-        this.moveToward(this.tmp, dt, 0.05);
+        this.moveToward(this.tmp, dt);
         this.faceLook(CANVAS_FOCUS, dt);
         this.pose.lean = damp(this.pose.lean, 0.1, 4, dt);
         break;
@@ -143,166 +133,185 @@ export class GolemController {
       case 'fetch': {
         this.faceLook(STATIONS.bench, dt);
         this.pose.lean = damp(this.pose.lean, 0.12, 4, dt);
-        this.pose.brushSwing = Math.sin(this.gestureT * 3) * 0.4; // stirring
-        this.pose.bob = Math.sin(this.gestureT * 3) * 0.02;
+        this.pose.brushSwing = Math.sin(this.gestureT * 2.6) * 0.35;
+        this.pose.bob = damp(this.pose.bob, 0, 6, dt);
         break;
       }
       case 'plan': {
         this.faceLook(CANVAS_FOCUS, dt);
         this.pose.lean = damp(this.pose.lean, 0.04, 4, dt);
-        this.pose.wiggle = damp(this.pose.wiggle, Math.sin(this.gestureT * 0.6) * 0.12, 3, dt); // pondering tilt
+        this.pose.wiggle = damp(this.pose.wiggle, Math.sin(this.gestureT * 0.6) * 0.12, 3, dt);
         break;
       }
       case 'celebrate': {
         this.faceLook(CANVAS_FOCUS, dt);
-        const hop = Math.abs(Math.sin(this.gestureT * 6));
-        this.pose.bob = hop * 0.18;
-        this.pose.squash = 1 + Math.sin(this.gestureT * 6) * 0.06;
-        this.pose.yaw += dt * 1.5; // little spin of joy
+        this.pose.bob = damp(this.pose.bob, Math.abs(Math.sin(this.gestureT * 5)) * 0.08, 6, dt);
+        this.pose.squash = 1 + Math.sin(this.gestureT * 5) * 0.04;
         break;
       }
       case 'idle':
       default: {
-        // enjoy the scenery — gentle breathe, occasional look around
-        this.pose.bob = damp(this.pose.bob, Math.sin(this.gestureT * 1.4) * 0.02, 3, dt);
+        this.pose.bob = damp(this.pose.bob, Math.sin(this.gestureT * 1.4) * 0.015, 3, dt);
         this.pose.lean = damp(this.pose.lean, 0, 4, dt);
-        this.pose.brushSwing = Math.sin(this.gestureT * 0.5) * 0.15; // idle brush spin
-        const sway = Math.sin(this.gestureT * 0.3);
-        this.faceYaw(this.baseYaw() + sway * 0.5, dt, 2);
+        this.pose.brushSwing = Math.sin(this.gestureT * 0.5) * 0.12;
+        this.faceYaw(this.baseYaw() + Math.sin(this.gestureT * 0.3) * 0.5, dt, 2);
         break;
       }
     }
-    this.pose.wiggle = damp(this.pose.wiggle, this.pose.wiggle, 6, dt);
   }
 
-  // ── cursor awareness: notice / distract / tickle / follow ──────────
+  // ── cursor awareness ───────────────────────────────────────────────
   private updateCursorAttention(dt: number, distraction: number) {
     const dist = this.cursor.distanceTo(this.pose.position);
     const near = dist < 2.2;
     const active = this.cursor.activity > 0.25;
+    this.noticeCd -= dt; this.followCd -= dt;
 
-    this.noticeCd -= dt;
-    this.followCd -= dt;
-
-    // build / decay distraction pressure from fidgeting nearby
     let d = distraction;
-    if (near && active) d = Math.min(1, d + dt * 0.7);
-    else d = Math.max(0, d - dt * 0.35);
+    d = near && active ? Math.min(1, d + dt * 0.7) : Math.max(0, d - dt * 0.35);
     this.set({ distraction: d });
 
-    // rare "the cursor is helping" follow event (~5% when conditions ripe)
-    if (!golemState().following && this.followCd <= 0 && near && active && Math.random() < 0.05 * dt * 60) {
-      this.startFollow();
-    }
+    if (!golemState().following && this.followCd <= 0 && near && active && Math.random() < 0.05 * dt * 60) this.startFollow();
     if (golemState().following) { this.followCursor(dt); return; }
 
-    // glance at the cursor briefly, then back to work
     if (this.noticing > 0) {
       this.noticing -= dt;
       this.faceLook(this.cursor.world, dt, 6);
-      this.pose.lean = damp(this.pose.lean, 0.02, 5, dt);
     } else if (near && this.noticeCd <= 0) {
-      this.noticing = 0.8 + Math.random() * 0.8;
+      this.noticing = 0.7 + Math.random() * 0.8;
       this.noticeCd = 3 + Math.random() * 4;
       this.set({ mood: 'curious' });
     }
 
-    // distraction reactions: annoyance + protective tilt; tickle = wiggle/jump
     if (d > 0.55) {
       this.set({ mood: d > 0.85 ? 'annoyed' : 'curious' });
-      this.pose.wiggle += Math.sin(performance.now() * 0.02) * 0.05 * d; // brush/body wobble
+      this.pose.wiggle += Math.sin(performance.now() * 0.02) * 0.04 * d;
       if (d > 0.85) {
-        // tickle: playful wiggle + small jump
         this.set({ mood: 'playful' });
-        this.pose.bob = Math.max(this.pose.bob, Math.abs(Math.sin(performance.now() * 0.012)) * 0.12);
-        this.pose.squash = 1 + Math.sin(performance.now() * 0.024) * 0.05;
+        this.pose.bob = Math.max(this.pose.bob, Math.abs(Math.sin(performance.now() * 0.012)) * 0.07); // small tickle hop
+        this.pose.squash = 1 + Math.sin(performance.now() * 0.024) * 0.04;
       }
     }
   }
 
   private startFollow() {
     this.set({ following: true, mood: 'playful' });
-    this.followCd = 18 + Math.random() * 12;
+    this.followCd = 20 + Math.random() * 12;
     this.noticing = 0;
     window.setTimeout(() => this.set({ following: false, mood: 'neutral' }), 5000 + Math.random() * 5000);
   }
-
   private followCursor(dt: number) {
-    // approach a point a little short of the cursor, mimic its motion, "paint" near it
-    this.tmp.copy(this.cursor.world);
-    const home = STATIONS.easel;
-    // keep the golem within the workshop so it doesn't wander off the platform
-    this.tmp.clampLength(0, 6).add(home).multiplyScalar(0.5);
-    this.moveToward(this.cursor.world, dt, 0.4);
+    this.moveToward(this.cursor.world, dt);
     this.faceLook(this.cursor.world, dt, 8);
     this.pose.brushSwing = Math.sin(performance.now() * 0.01) * 0.6;
-    this.pose.bob = Math.abs(Math.sin(performance.now() * 0.008)) * 0.06;
   }
 
+  // ── personality / special one-shots ────────────────────────────────
   private updateRareEvents(dt: number) {
     this.rareCd -= dt;
     if (this.rareCd > 0) return;
-    this.rareCd = 16 + Math.random() * 20;
-    // brief personality flourishes layered onto whatever it's doing
-    const roll = Math.random();
-    if (roll < 0.4) this.set({ mood: 'proud' });      // admire masterpiece
-    else if (roll < 0.7) this.takeABow();
-    else this.set({ mood: 'curious' });               // bird lands / watch colours
+    this.rareCd = 16 + Math.random() * 22;
+    const r = Math.random();
+    if (r < 0.18) this.startSpecial(this.flip());
+    else if (r < 0.34) this.startSpecial(this.tossBrush());
+    else if (r < 0.5) this.startSpecial(this.sit());
+    else if (r < 0.68) this.startSpecial(this.observe());
+    else if (r < 0.84) this.startSpecial(this.bow());
+    else this.set({ mood: 'proud' }); // admire the masterpiece
   }
 
-  private takeABow() {
+  private startSpecial(s: Special) { this.special = s; this.gestureT = 0; }
+  private runSpecial(dt: number) {
+    const s = this.special!;
+    s.t += dt;
+    const k = Math.min(1, s.t / s.dur);
+    s.apply(this.pose, k);
+    if (k >= 1) { s.done?.(); this.special = null; }
+  }
+
+  private flip(): Special {
+    this.set({ mood: 'playful' });
+    return { t: 0, dur: 0.9, apply: (p, k) => {
+      p.bob = pulse(k) * 0.9;                 // leap
+      p.roll = -k * Math.PI * 2;              // full forward rotation
+      p.squash = 1 + (k < 0.15 ? k * 0.4 : 0) - (k > 0.85 ? (k - 0.85) * 0.6 : 0);
+    }, done: () => this.set({ mood: 'neutral' }) };
+  }
+  private tossBrush(): Special {
+    this.set({ mood: 'playful' });
+    return { t: 0, dur: 1.1, apply: (p, k) => {
+      p.brushSwing = Math.sin(k * Math.PI) * 2.0;  // big up-and-catch arc
+      p.bob = pulse(k) * 0.06; p.lean = -0.1 * pulse(k);
+    }, done: () => this.set({ mood: 'proud' }) };
+  }
+  private sit(): Special {
+    this.set({ mood: 'neutral' });
+    return { t: 0, dur: 3.2, apply: (p, k) => {
+      const s = k < 0.2 ? k / 0.2 : k > 0.8 ? (1 - k) / 0.2 : 1; // ease down then up
+      p.bob = -0.18 * s; p.lean = -0.12 * s; p.squash = 1 + 0.08 * s;
+    } };
+  }
+  private observe(): Special {
+    this.set({ mood: 'curious' });
+    return { t: 0, dur: 2.6, apply: (p, k) => {
+      p.yaw = this.baseYaw() + Math.sin(k * Math.PI * 2) * 0.9; // look around at scenery
+      p.lean = Math.sin(k * Math.PI) * 0.1;
+    } };
+  }
+  private bow(): Special {
     this.set({ mood: 'proud' });
-    const start = performance.now();
-    const tick = () => {
-      const t = (performance.now() - start) / 900;
-      if (t >= 1) { this.set({ mood: 'neutral' }); return; }
-      this.pose.lean = 0.05 + pulse(t) * 0.5;
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
+    return { t: 0, dur: 1.0, apply: (p, k) => { p.lean = 0.05 + pulse(k) * 0.55; }, done: () => this.set({ mood: 'neutral' }) };
   }
 
-  // ── fourth-wall set-piece ──────────────────────────────────────────
+  // ── fourth-wall set-piece (made large & clearly visible) ───────────
   private updateFourthWall(dt: number, camera: THREE.Camera, phase: string) {
     this.camPos.setFromMatrixPosition(camera.matrixWorld);
-    // a point in front of the camera, low in frame (the "edge of the world")
     const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-    this.fwPos.copy(this.camPos).addScaledVector(fwd, 6).setY(0.2);
+    const edge = this.camPos.clone().addScaledVector(fwd, 9).setY(0.2); // edge of the world
 
     switch (phase) {
       case 'freeze': {
-        // did anyone notice? look left, then right
         const t = (performance.now() % 2400) / 2400;
-        this.faceYaw(this.baseYaw() + Math.sin(t * Math.PI * 2) * 0.9, dt, 5);
+        this.faceYaw(this.baseYaw() + Math.sin(t * Math.PI * 2) * 1.0, dt, 5);
         this.pose.lean = damp(this.pose.lean, 0, 5, dt);
+        this.pose.position.y = groundHeightAt(this.pose.position.x, this.pose.position.z);
         break;
       }
       case 'approach': {
-        this.moveToward(this.fwPos, dt);
+        this.moveToward(edge, dt);
         this.faceLook(this.camPos, dt, 6);
+        this.pose.position.y = groundHeightAt(this.pose.position.x, this.pose.position.z);
         break;
       }
       case 'reach': {
-        this.moveToward(this.fwPos, dt, 0.2);
+        // climb up toward the viewer with little hops, growing larger
+        const front = this.frontOfCamera(camera, 9, -0.6);
+        this.pose.position.lerp(front, 1 - Math.exp(-6 * dt));
         this.faceLook(this.camPos, dt, 8);
-        this.pose.lean = damp(this.pose.lean, 0.5, 4, dt);   // lean toward the viewer
-        this.pose.scale = damp(this.pose.scale, 1.6, 4, dt); // loom larger in frame
+        this.pose.lean = damp(this.pose.lean, 0.4, 4, dt);
+        this.pose.scale = damp(this.pose.scale, 1.6, 4, dt);
+        this.pose.bob = Math.abs(Math.sin(performance.now() * 0.009)) * 0.22; // climbing hops
         break;
       }
       case 'emerge': {
-        // a partial jump toward the viewer — not all the way out
-        this.pose.position.lerp(this.fwPos.clone().addScaledVector(fwd, 1.6), 1 - Math.exp(-8 * dt));
+        // multiple jumps right up to the camera — occupies ~30% of the frame
+        const front = this.frontOfCamera(camera, 7.5, -0.5);
+        this.pose.position.lerp(front, 1 - Math.exp(-7 * dt));
         this.faceLook(this.camPos, dt, 10);
-        this.pose.scale = damp(this.pose.scale, 2.0, 5, dt);
-        this.pose.bob = Math.abs(Math.sin(performance.now() * 0.012)) * 0.2;
+        this.pose.scale = damp(this.pose.scale, 2.1, 5, dt);
+        this.pose.bob = Math.abs(Math.sin(performance.now() * 0.012)) * 0.3;
         break;
       }
       case 'clean': {
+        // big, slow, clearly-visible scrubbing centred on the stain
+        const front = this.frontOfCamera(camera, 7.5, -0.45);
+        this.pose.position.lerp(front, 1 - Math.exp(-6 * dt));
         this.faceLook(this.camPos, dt, 8);
-        this.pose.scale = damp(this.pose.scale, 1.9, 4, dt);
-        // big deliberate wiping strokes
-        this.pose.brushSwing = Math.sin(performance.now() * 0.012) * 1.0;
-        this.pose.lean = 0.25 + Math.sin(performance.now() * 0.012) * 0.1;
+        this.pose.scale = damp(this.pose.scale, 2.0, 4, dt);
+        this.pose.brushSwing = Math.sin(performance.now() * 0.009) * 1.3;     // sweeping wipes
+        this.pose.lean = 0.25 + Math.sin(performance.now() * 0.009) * 0.12;
+        this.pose.wiggle = Math.sin(performance.now() * 0.009) * 0.18;        // whole-body scrub
+        this.pose.bob = Math.abs(Math.sin(performance.now() * 0.018)) * 0.05;
         break;
       }
       case 'return': {
@@ -310,49 +319,68 @@ export class GolemController {
         const arrived = this.moveToward(STATIONS.easel, dt);
         this.faceLook(CANVAS_FOCUS, dt, 5);
         this.pose.lean = damp(this.pose.lean, 0.05, 4, dt);
-        if (arrived) { this.set({ fourthWall: 'none', mood: 'proud', task: 'review' }); this.phase = 'work'; this.plan = nextTask('paint', artworkProgress()); this.timer = 2; }
+        this.pose.position.y = groundHeightAt(this.pose.position.x, this.pose.position.z);
+        if (arrived) {
+          this.set({ fourthWall: 'none', mood: 'proud', task: 'review' });
+          this.phase = 'work'; this.plan = nextTask('paint', artworkProgress()); this.timer = 2;
+        }
         break;
       }
     }
   }
 
+  /** A point centred on the stain (or screen centre), `dist` in front of camera. */
+  private frontOfCamera(camera: THREE.Camera, dist: number, vshift: number): THREE.Vector3 {
+    const stain = golemState().stain;
+    const ndc = new THREE.Vector3(0, vshift, 0.5);
+    if (stain && typeof window !== 'undefined') {
+      ndc.x = (stain.x / window.innerWidth) * 2 - 1;
+      ndc.y = -((stain.y / window.innerHeight) * 2 - 1) + vshift;
+    }
+    ndc.unproject(camera);
+    const dir = ndc.sub(this.camPos).normalize();
+    return this.camPos.clone().addScaledVector(dir, dist);
+  }
+
   // ── motion helpers ─────────────────────────────────────────────────
-  /** Move toward target on the ground; returns true when essentially there. */
-  private moveToward(target: THREE.Vector3, dt: number, hopScale = 1): boolean {
+  /** Walk toward target (gentle bob, not a hop). Returns true when arrived. */
+  private moveToward(target: THREE.Vector3, dt: number): boolean {
     const p = this.pose.position;
     this.tmp.set(target.x - p.x, 0, target.z - p.z);
     const d = this.tmp.length();
-    if (d < 0.06) { this.pose.bob = damp(this.pose.bob, 0, 6, dt); return true; }
+    if (d < 0.06) { this.pose.bob = damp(this.pose.bob, 0, 6, dt); this.pose.squash = damp(this.pose.squash, 1, 6, dt); return true; }
     const step = Math.min(d, GOLEM.walkSpeed * dt);
     this.tmp.normalize().multiplyScalar(step);
     p.x += this.tmp.x; p.z += this.tmp.z;
-    // hop-walk: bob + squash synced to cadence
-    const hop = Math.abs(Math.sin(performance.now() * 0.001 * GOLEM.hopRate * Math.PI));
-    this.pose.bob = hop * GOLEM.hopHeight * hopScale;
-    this.pose.squash = 1 + (0.5 - hop) * 0.05;
+    const stride = Math.sin(performance.now() * 0.001 * GOLEM.stepRate * Math.PI * 2);
+    this.pose.bob = Math.abs(stride) * GOLEM.bobHeight;
+    this.pose.squash = 1 + stride * 0.025;     // subtle weight shift
+    this.pose.wiggle = stride * 0.04;          // gentle waddle
     this.pose.brushSwing = damp(this.pose.brushSwing, 0, 8, dt);
     return false;
   }
 
-  private faceYaw(target: number, dt: number, lambda = 6) {
-    this.pose.yaw = dampAngle(this.pose.yaw, target, lambda, dt);
-  }
-  private faceLook(point: THREE.Vector3, dt: number, lambda = 5) {
-    this.faceYaw(headingTo(this.pose.position, point), dt, lambda);
-  }
-  /** Default facing: toward the canvas. */
-  private baseYaw(): number {
-    return headingTo(this.pose.position, CANVAS_FOCUS);
+  /** Push the golem out of any soft obstacle it overlaps. */
+  private resolveObstacles() {
+    const p = this.pose.position;
+    for (const o of OBSTACLES) {
+      const dx = p.x - o.x, dz = p.z - o.z;
+      const d = Math.hypot(dx, dz);
+      if (d < o.r && d > 1e-4) {
+        const push = (o.r - d);
+        p.x += (dx / d) * push;
+        p.z += (dz / d) * push;
+      }
+    }
   }
 
-  private pickDuration(): number {
-    const [a, b] = this.plan.duration;
-    return a + Math.random() * (b - a);
-  }
+  private faceYaw(target: number, dt: number, lambda = 6) { this.pose.yaw = dampAngle(this.pose.yaw, target, lambda, dt); }
+  private faceLook(point: THREE.Vector3, dt: number, lambda = 5) { this.faceYaw(headingTo(this.pose.position, point), dt, lambda); }
+  private baseYaw(): number { return headingTo(this.pose.position, CANVAS_FOCUS); }
+  private pickDuration(): number { const [a, b] = this.plan.duration; return a + Math.random() * (b - a); }
   private moodFor(task: GolemTask): GolemMood {
     if (task === 'celebrate') return 'proud';
-    if (task === 'idle') return 'neutral';
-    if (task === 'paint') return 'neutral';
+    if (task === 'idle' || task === 'paint') return 'neutral';
     return 'curious';
   }
 }
