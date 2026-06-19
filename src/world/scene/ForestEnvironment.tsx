@@ -1,12 +1,18 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import { useGLTF } from '@react-three/drei';
-import { FOLIAGE, KENNEY } from '../config/assets';
+import { FOLIAGE, USN_COLLECTIONS } from '../config/assets';
 import { WORLD } from '../config/worldConfig';
 import { heightAt } from '../config/terrain';
 import { makeRng, scatter, scaleCount } from '../utils/placement';
 import ScatterLayer from './foliage/ScatterLayer';
+import CollectionScatter from './foliage/CollectionScatter';
 import GrassField from './foliage/GrassField';
+
+const U = USN_COLLECTIONS;
+/** Quaternius USN tree collections combined into the forest pools. */
+const USN_WALL = [U.pines, U.trees, U.birch, U.maple];
+const USN_MID = [U.trees, U.birch, U.maple, U.dead, U.pines];
 
 const ALL_TREES = [
   ...FOLIAGE.trees.common, ...FOLIAGE.trees.pine,
@@ -49,23 +55,22 @@ export default function ForestEnvironment({ lowPerf = false }: { lowPerf?: boole
     });
 
     return {
-      // ── BACKGROUND: dense forest wall on the rising bowl rim ──
-      // Kenney conifers form the cohesive wall; MegaKit trees add variety behind.
-      kenneyPines: mk(20, KENNEY.pines, 84, R * 0.5, R * 1.12, 4.0, 7.5),
-      bgTrees:  mk(11, WALL_TREES, 56, R * 0.62, R * 1.12, 2.6, 4.8),
+      // ── BACKGROUND: cheap MegaKit forest wall (backbone) + USN accents ──
+      usnWall:  mk(20, USN_WALL, 34, R * 0.5, R * 1.12, 0.85, 1.5),
+      bgTrees:  mk(11, WALL_TREES, 72, R * 0.6, R * 1.12, 2.6, 4.8),
       // ── MIDGROUND: trees, saplings, bushes, rocks ──
-      trees:    mk(1, ALL_TREES, c.trees, hole + 2, R * 0.72, 1.1, 2.4),
-      kenneyTrees: mk(21, KENNEY.trees, 46, hole + 2, R * 0.72, 3.2, 5.5),
-      saplings: mk(8, ALL_TREES, c.saplings, hole, R * 0.5, 0.5, 1.0),
+      usnMid:   mk(21, USN_MID, 22, hole + 2, R * 0.72, 0.7, 1.2),
+      trees:    mk(1, ALL_TREES, 44, hole + 2, R * 0.72, 1.1, 2.4),
+      saplings: mk(8, USN_MID, 14, hole, R * 0.5, 0.35, 0.6),
       bushes:   mk(2, FOLIAGE.bushes, c.bushes, hole - 1, R * 0.8, 0.8, 1.7),
-      kenneyBushes: mk(22, KENNEY.bushes, 70, hole - 2, R * 0.7, 2.5, 4.5),
+      usnBushes: mk(22, [U.bushes, U.flowerBushes], 46, hole - 2, R * 0.7, 0.7, 1.5),
       rocks:    mk(6, FOLIAGE.rocks, c.rocks, hole - 2, R * 0.85, 0.6, 2.0),
-      logs:     mk(23, KENNEY.logs, 16, hole, R * 0.6, 2.0, 4.0),
+      usnRocks: mk(23, [U.rocks], 16, hole, R * 0.85, 0.7, 1.8),
       // ── FOREGROUND: dense floor cover ──
       undergrowth: mk(9, FOLIAGE.undergrowth, c.undergrowth, hole - 4, R - 4, 0.7, 1.7),
       ferns:    mk(4, FOLIAGE.ferns, c.ferns, hole, R * 0.75, 0.8, 1.6),
-      flowers:  mk(3, FOLIAGE.flowers, 130, hole - 3, R * 0.78, 0.7, 1.4),
-      kenneyFlowers: mk(24, KENNEY.flowers, 150, hole - 5, R * 0.6, 2.0, 3.6),
+      flowers:  mk(3, FOLIAGE.flowers, 90, hole - 3, R * 0.78, 0.7, 1.4),
+      usnFlowers: mk(24, [U.flowers], 90, hole - 5, R * 0.6, 0.7, 1.4),
       petals:   mk(14, FOLIAGE.petals, c.petals, hole - 6, R * 0.5, 0.7, 1.5),
       mushrooms: mk(5, FOLIAGE.mushrooms, c.mushrooms, hole - 4, R * 0.7, 0.7, 1.4),
       pebbles:  mk(7, FOLIAGE.pebbles, c.pebbles, hole - 5, R * 0.6, 0.6, 1.4),
@@ -78,32 +83,32 @@ export default function ForestEnvironment({ lowPerf = false }: { lowPerf?: boole
       <Path />
 
       {/* background → midground → foreground draw order */}
-      <ScatterLayer models={layers.kenneyPines.models} placements={layers.kenneyPines.placements}
-        wind={{ strength: 0.06, pivot: 5 }} castShadow={false} />
+      <CollectionScatter collections={USN_WALL} placements={layers.usnWall.placements}
+        targetHeight={9} wind={{ strength: 0.06, pivot: 5 }} castShadow={false} />
       <ScatterLayer models={layers.bgTrees.models} placements={layers.bgTrees.placements}
         wind={{ strength: 0.07, pivot: 6 }} castShadow={false} />
+      <CollectionScatter collections={USN_MID} placements={layers.usnMid.placements}
+        targetHeight={6} wind={{ strength: 0.12, pivot: 3.5 }} castShadow={false} />
       <ScatterLayer models={layers.trees.models} placements={layers.trees.placements}
-        wind={{ strength: 0.12, pivot: 4.5 }} castShadow />
-      <ScatterLayer models={layers.kenneyTrees.models} placements={layers.kenneyTrees.placements}
-        wind={{ strength: 0.12, pivot: 3.5 }} castShadow />
-      <ScatterLayer models={layers.saplings.models} placements={layers.saplings.placements}
-        wind={{ strength: 0.2, pivot: 1.6 }} castShadow />
+        wind={{ strength: 0.12, pivot: 4.5 }} castShadow={false} />
+      <CollectionScatter collections={USN_MID} placements={layers.saplings.placements}
+        targetHeight={6} wind={{ strength: 0.2, pivot: 1.6 }} castShadow={false} />
       <ScatterLayer models={layers.bushes.models} placements={layers.bushes.placements}
-        wind={{ strength: 0.22, pivot: 1.2 }} castShadow />
-      <ScatterLayer models={layers.kenneyBushes.models} placements={layers.kenneyBushes.placements}
-        wind={{ strength: 0.24, pivot: 0.8 }} castShadow={false} />
+        wind={{ strength: 0.22, pivot: 1.2 }} castShadow={false} />
+      <CollectionScatter collections={[U.bushes, U.flowerBushes]} placements={layers.usnBushes.placements}
+        targetHeight={1.1} wind={{ strength: 0.24, pivot: 0.8 }} castShadow={false} />
       <ScatterLayer models={layers.rocks.models} placements={layers.rocks.placements}
-        wind={false} castShadow receiveShadow />
-      <ScatterLayer models={layers.logs.models} placements={layers.logs.placements}
-        wind={false} castShadow receiveShadow />
+        wind={false} castShadow={false} receiveShadow />
+      <CollectionScatter collections={[U.rocks]} placements={layers.usnRocks.placements}
+        targetHeight={1.6} wind={false} castShadow receiveShadow />
       <ScatterLayer models={layers.undergrowth.models} placements={layers.undergrowth.placements}
         wind={{ strength: 0.28, pivot: 0.9 }} castShadow={false} tints={UNDERGROWTH_TINTS} />
       <ScatterLayer models={layers.ferns.models} placements={layers.ferns.placements}
         wind={{ strength: 0.3, pivot: 0.8 }} castShadow={false} />
       <ScatterLayer models={layers.flowers.models} placements={layers.flowers.placements}
         wind={{ strength: 0.35, pivot: 0.5 }} castShadow={false} />
-      <ScatterLayer models={layers.kenneyFlowers.models} placements={layers.kenneyFlowers.placements}
-        wind={{ strength: 0.38, pivot: 0.4 }} castShadow={false} />
+      <CollectionScatter collections={[U.flowers]} placements={layers.usnFlowers.placements}
+        targetHeight={0.6} wind={{ strength: 0.38, pivot: 0.4 }} castShadow={false} />
       <ScatterLayer models={layers.petals.models} placements={layers.petals.placements}
         wind={{ strength: 0.4, pivot: 0.3 }} castShadow={false} />
       <ScatterLayer models={layers.mushrooms.models} placements={layers.mushrooms.placements}

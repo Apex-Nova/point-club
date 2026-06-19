@@ -14,18 +14,18 @@ export const WORLD = {
    *  Tuned for a forest-bowl: sparse-ish foreground, dense midground, a thick
    *  background tree wall on the rising rim. */
   counts: {
-    saplings: 40,     // small midground trees / clusters
+    saplings: 24,     // small midground trees / clusters
     trees: 62,        // midground trees
     bgTrees: 96,      // dense background forest wall on the bowl rim
-    bushes: 58,
-    undergrowth: 240, // dense leafy floor cover
+    bushes: 36,
+    undergrowth: 150, // dense leafy floor cover
     flowers: 210,     // colourful flower patches + singles
-    petals: 150,      // tiny foreground ground detail
-    rocks: 48,
-    pebbles: 90,
-    mushrooms: 36,
-    ferns: 56,
-    grass: 16000,     // instanced, layered species
+    petals: 90,       // tiny foreground ground detail
+    rocks: 30,
+    pebbles: 55,
+    mushrooms: 24,
+    ferns: 38,
+    grass: 12000,     // instanced, layered species
   },
 
   /** Pond + waterfall feature (terrain is carved/raised to suit). Placed
