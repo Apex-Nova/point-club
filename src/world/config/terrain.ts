@@ -31,6 +31,15 @@ function hills(x: number, z: number): number {
   );
 }
 
+/** Forest-bowl rim: ground rises with distance so dense forest surrounds the
+ *  clearing on every side and blocks the empty horizon. */
+const BOWL_INNER = 11;   // clearing stays low out to here
+const BOWL_OUTER = 50;   // fully raised rim by here
+const BOWL_HEIGHT = 13;  // how high the surrounding forest floor lifts
+function bowl(d: number): number {
+  return smooth(Math.min(1, Math.max(0, (d - BOWL_INNER) / (BOWL_OUTER - BOWL_INNER)))) * BOWL_HEIGHT;
+}
+
 /** Basin that dips down toward the pond, plus a mound behind the waterfall. */
 function waterShaping(x: number, z: number): number {
   let h = 0;
@@ -58,9 +67,10 @@ export function heightAt(x: number, z: number): number {
     const t = (d - PLATFORM_RADIUS) / (FLAT_RADIUS - PLATFORM_RADIUS);
     return PLATFORM_TOP * (1 - smooth(t)) + waterShaping(x, z) * smooth(t);
   }
-  // ramp hills in beyond the flat zone so the edge isn't a step
+  // ramp hills in beyond the flat zone so the edge isn't a step, plus the
+  // rising forest-bowl rim that surrounds the clearing on all sides
   const ramp = smooth(Math.min(1, (d - FLAT_RADIUS) / 14));
-  return hills(x, z) * 0.9 * ramp + waterShaping(x, z);
+  return hills(x, z) * 0.9 * ramp + bowl(d) + waterShaping(x, z);
 }
 
 /** Surface height the golem/props should stand on (platform-aware). */

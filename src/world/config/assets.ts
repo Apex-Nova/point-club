@@ -20,8 +20,18 @@ export const FOLIAGE = {
   flowers: [
     `${KIT}/Flower_3_Group.gltf`,
     `${KIT}/Flower_4_Group.gltf`,
+    `${KIT}/Flower_3_Single.gltf`,
+    `${KIT}/Flower_4_Single.gltf`,
     `${KIT}/Clover_1.gltf`,
     `${KIT}/Clover_2.gltf`,
+  ],
+  /** Tiny ground petals/clover for the densest foreground detail. */
+  petals: [1, 2, 3, 4, 5].map(n => `${KIT}/Petal_${n}.gltf`),
+  /** Stepping-stone path pieces (round + square). */
+  pathStones: [
+    `${KIT}/RockPath_Round_Wide.gltf`, `${KIT}/RockPath_Round_Thin.gltf`,
+    `${KIT}/RockPath_Round_Small_1.gltf`, `${KIT}/RockPath_Round_Small_2.gltf`,
+    `${KIT}/RockPath_Round_Small_3.gltf`,
   ],
   ferns: [`${KIT}/Fern_1.gltf`, `${KIT}/Plant_1.gltf`, `${KIT}/Plant_7.gltf`],
   /** Dense, leafy low undergrowth — fills the floor for the lush jungle look. */
@@ -32,7 +42,10 @@ export const FOLIAGE = {
   ],
   mushrooms: [`${KIT}/Mushroom_Common.gltf`, `${KIT}/Mushroom_Laetiporus.gltf`],
   rocks: [`${KIT}/Rock_Medium_1.gltf`, `${KIT}/Rock_Medium_2.gltf`, `${KIT}/Rock_Medium_3.gltf`],
-  pebbles: [1, 2, 3, 4, 5].map(n => `${KIT}/Pebble_Round_${n}.gltf`),
+  pebbles: [
+    ...[1, 2, 3, 4, 5].map(n => `${KIT}/Pebble_Round_${n}.gltf`),
+    ...[1, 2, 3, 4, 5, 6].map(n => `${KIT}/Pebble_Square_${n}.gltf`),
+  ],
   /** Single-mesh grass tuft — used for instancing. */
   grass: `${KIT}/Grass_Common_Tall.gltf`,
   /** Grass species for layered, varied instanced ground cover. */

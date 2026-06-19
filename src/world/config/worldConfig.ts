@@ -10,18 +10,22 @@ export const WORLD = {
   /** Seed for deterministic scatter so the forest looks the same every load. */
   seed: 1337,
 
-  /** Foliage population (auto-scaled down on mobile in placement). */
+  /** Foliage population (auto-scaled down on mobile in placement).
+   *  Tuned for a forest-bowl: sparse-ish foreground, dense midground, a thick
+   *  background tree wall on the rising rim. */
   counts: {
-    trees: 46,
-    bgTrees: 60,      // dense background ring for depth
-    bushes: 46,
-    undergrowth: 220, // dense leafy floor cover (the lush jungle look)
-    flowers: 160,     // colourful flower patches
-    rocks: 38,
-    pebbles: 60,
-    mushrooms: 30,
-    ferns: 44,
-    grass: 14000,     // instanced, layered species
+    saplings: 40,     // small midground trees / clusters
+    trees: 62,        // midground trees
+    bgTrees: 96,      // dense background forest wall on the bowl rim
+    bushes: 58,
+    undergrowth: 240, // dense leafy floor cover
+    flowers: 210,     // colourful flower patches + singles
+    petals: 150,      // tiny foreground ground detail
+    rocks: 48,
+    pebbles: 90,
+    mushrooms: 36,
+    ferns: 56,
+    grass: 16000,     // instanced, layered species
   },
 
   /** Pond + waterfall feature (terrain is carved/raised to suit). Placed
