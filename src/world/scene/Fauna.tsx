@@ -12,14 +12,22 @@ import { WORLD } from '../config/worldConfig';
  *  - butterflies fluttering over the flower beds (baked clip + drift)
  *  - birds gliding in slow arcs above the clearing (procedural flight)
  */
+/** Spots where butterflies congregate — over the flower beds and the pond. */
+const BUTTERFLY_HAUNTS: [number, number, number][] = [
+  [-4, 1.3, 5], [-9, 1.2, 7], [2, 1.4, 8], [-2, 1.1, -3], [5, 1.3, 4],
+];
+
 export default function Fauna({ lowPerf = false }: { lowPerf?: boolean }) {
   const fishCount = lowPerf ? 3 : 6;
+  const flutterCount = lowPerf ? 5 : 9;
   return (
     <group name="Fauna">
       {Array.from({ length: fishCount }).map((_, i) => (
         <Fish key={i} index={i} />
       ))}
-      <Butterflies />
+      {Array.from({ length: flutterCount }).map((_, i) => (
+        <Butterfly key={i} index={i} />
+      ))}
       {!lowPerf && <Bird model={FAUNA.birds[0]} radius={20} height={10} speed={0.18} dir={1} />}
       <Bird model={FAUNA.birds[1]} radius={13} height={7} speed={0.32} dir={-1} />
       <Bird model={FAUNA.birds[0]} radius={26} height={13} speed={0.12} dir={1} phase={3} />
@@ -65,31 +73,51 @@ function Fish({ index }: { index: number }) {
   return <group ref={group} scale={cfg.scale}><primitive object={model} /></group>;
 }
 
-/** The butterfly swarm — one baked-animation pack drifting over the flowers. */
-function Butterflies() {
-  const { scene, animations } = useGLTF(FAUNA.butterflies);
+/** One rigged butterfly fluttering on a wandering loop around a flower haunt. */
+function Butterfly({ index }: { index: number }) {
+  const { scene, animations } = useGLTF(FAUNA.butterfly);
   const model = useMemo(() => skeletonClone(scene), [scene]);
   const group = useRef<THREE.Group>(null);
   const { actions } = useAnimations(animations, group);
 
-  useMemo(() => { Object.values(actions)[0]?.reset().play(); }, [actions]);
+  const cfg = useMemo(() => {
+    const anchor = BUTTERFLY_HAUNTS[index % BUTTERFLY_HAUNTS.length];
+    return {
+      anchor: new THREE.Vector3(...anchor),
+      rx: 1.4 + (index % 3) * 0.8,
+      rz: 1.2 + (index % 4) * 0.7,
+      sx: 0.25 + (index % 3) * 0.07,   // wander speeds (lissajous)
+      sz: 0.19 + (index % 4) * 0.05,
+      sy: 0.6 + (index % 3) * 0.2,
+      phase: index * 1.3,
+      scale: 0.38 + (index % 3) * 0.1,
+    };
+  }, [index]);
 
-  // hover over a flowery spot between the workshop and the pond
-  const anchor = useMemo(() => new THREE.Vector3(-4, 1.4, 5), []);
+  useMemo(() => {
+    // prefer the "Flying" clip, else whatever exists
+    const a = actions['Flying'] ?? Object.values(actions)[0];
+    a?.reset().play();
+    if (a) a.timeScale = 1.2 + (index % 3) * 0.2;
+  }, [actions, index]);
 
+  const last = useMemo(() => new THREE.Vector3().copy(cfg.anchor), [cfg]);
   useFrame(({ clock }) => {
     const g = group.current;
     if (!g) return;
-    const t = clock.elapsedTime;
-    g.position.set(
-      anchor.x + Math.sin(t * 0.3) * 2.5,
-      anchor.y + Math.sin(t * 0.7) * 0.5,
-      anchor.z + Math.cos(t * 0.23) * 2.5,
-    );
-    g.rotation.y = t * 0.15;
+    const t = clock.elapsedTime * 0.6 + cfg.phase;
+    const x = cfg.anchor.x + Math.sin(t * cfg.sx * 3) * cfg.rx + Math.sin(t * 0.7) * 0.4;
+    const y = cfg.anchor.y + Math.sin(t * cfg.sy * 3) * 0.45;
+    const z = cfg.anchor.z + Math.cos(t * cfg.sz * 3) * cfg.rz + Math.cos(t * 0.5) * 0.4;
+    g.position.set(x, y, z);
+    // face direction of travel
+    if (Math.abs(x - last.x) + Math.abs(z - last.z) > 1e-4) {
+      g.rotation.y = Math.atan2(x - last.x, z - last.z);
+    }
+    last.set(x, y, z);
   });
 
-  return <group ref={group} scale={0.5}><primitive object={model} /></group>;
+  return <group ref={group} scale={cfg.scale}><primitive object={model} /></group>;
 }
 
 /** A bird gliding in a slow banked arc above the world (procedural). */
@@ -121,6 +149,6 @@ function Bird({
   return <group ref={group}><primitive object={clone} /></group>;
 }
 
-useGLTF.preload(FAUNA.butterflies);
+useGLTF.preload(FAUNA.butterfly);
 FAUNA.fish.forEach(f => useGLTF.preload(f));
 FAUNA.birds.forEach(b => useGLTF.preload(b));

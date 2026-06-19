@@ -60,7 +60,8 @@ export const CHARACTERS = {
  *  butterflies and fish carry their own baked animation clips. */
 export const FAUNA = {
   birds: [`${BASE}/characters/birds/parrot.glb`, `${BASE}/characters/birds/hummingbird.glb`],
-  butterflies: `${BASE}/characters/butterflies/butterflies.glb`,
+  /** Single rigged butterfly (Flying/Idle clips) — scattered as individuals. */
+  butterfly: `${BASE}/characters/butterflies/butterfly_single.glb`,
   fish: [
     `${BASE}/characters/fish/fish_a.glb`,
     `${BASE}/characters/fish/fish_b.glb`,
