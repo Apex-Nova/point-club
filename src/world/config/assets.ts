@@ -5,6 +5,40 @@
 
 const BASE = '/assets';
 const KIT = `${BASE}/foliage/megakit`; // Quaternius Stylized Nature MegaKit (CC0)
+const NK = `${BASE}/foliage/kenney`;   // Kenney Nature Kit (CC0)
+
+/**
+ * Kenney Nature Kit — cohesive low-poly set. Native models are small
+ * (~1.2–1.7u trees), so these get larger scatter scales than the MegaKit.
+ */
+export const KENNEY = {
+  /** Tall conifers — ideal for the dense background forest wall. */
+  pines: [
+    'tree_pineTallA', 'tree_pineTallB', 'tree_pineTallC', 'tree_pineTallD',
+    'tree_pineTallA_detailed', 'tree_pineTallB_detailed', 'tree_pineTallC_detailed',
+    'tree_pineRoundA', 'tree_pineRoundB', 'tree_pineRoundC', 'tree_pineRoundD',
+    'tree_pineRoundE', 'tree_pineRoundF', 'tree_pineDefaultA', 'tree_pineDefaultB',
+  ].map(n => `${NK}/${n}.glb`),
+  /** Broadleaf + autumn-coloured trees for midground variety. */
+  trees: [
+    'tree_oak', 'tree_default', 'tree_detailed', 'tree_fat', 'tree_tall', 'tree_thin',
+    'tree_simple', 'tree_cone', 'tree_oak_fall', 'tree_default_fall', 'tree_detailed_fall',
+    'tree_tall_fall', 'tree_simple_fall', 'tree_plateau',
+  ].map(n => `${NK}/${n}.glb`),
+  /** Bright flowers (purple/red/yellow ×3). */
+  flowers: [
+    'flower_purpleA', 'flower_purpleB', 'flower_purpleC',
+    'flower_redA', 'flower_redB', 'flower_redC',
+    'flower_yellowA', 'flower_yellowB', 'flower_yellowC',
+  ].map(n => `${NK}/${n}.glb`),
+  /** Leafy bushes/plants for undergrowth. */
+  bushes: [
+    'plant_bush', 'plant_bushDetailed', 'plant_bushLarge',
+    'plant_bushSmall', 'plant_bushTriangle', 'plant_bushLargeTriangle',
+  ].map(n => `${NK}/${n}.glb`),
+  /** Fallen logs / stacks for ground storytelling. */
+  logs: ['log', 'log_large', 'log_stack', 'log_stackLarge'].map(n => `${NK}/${n}.glb`),
+} as const;
 
 /** Foliage GLTF models grouped by role. Filenames match the MegaKit. */
 export const FOLIAGE = {
