@@ -14,7 +14,7 @@ import { windUniforms } from '../shaders/wind';
 const LEAF_COLORS = ['#c0392b', '#e0512b', '#d98a2b', '#e6b54e', '#caa83a', '#5a8f3c'];
 
 export default function FallingLeaves({ lowPerf = false }: { lowPerf?: boolean }) {
-  const count = lowPerf ? 28 : 60;
+  const count = lowPerf ? 20 : 44;
   const meshRef = useRef<THREE.InstancedMesh>(null);
 
   const { geometry, material, leaves, dummy } = useMemo(() => {

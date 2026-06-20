@@ -35,27 +35,30 @@ export default function AtmosphereSystem({ lowPerf = false }: { lowPerf?: boolea
   useFrame(({ clock }) => {
     const { atmosphereIntensity, scrollProgress } = worldState();
     const intensity = atmosphereIntensity * (0.5 + scrollProgress * 0.7);
-    if (fogRef.current) fogRef.current.density = 0.004 + intensity * 0.014;
+    // light, hazy atmospheric perspective — distant forest softens into warm haze
+    if (fogRef.current) fogRef.current.density = 0.011 + intensity * 0.012;
     if (motesRef.current) {
       const t = clock.elapsedTime;
       motesRef.current.position.y = Math.sin(t * 0.1) * 0.4;
       motesRef.current.rotation.y = t * 0.01;
-      (motesRef.current.material as THREE.PointsMaterial).opacity = 0.12 + intensity * 0.35;
+      (motesRef.current.material as THREE.PointsMaterial).opacity = 0.22 + intensity * 0.4;
     }
   });
 
   return (
     <>
-      <fogExp2 ref={fogRef} attach="fog" args={['#e9d8b8', 0.006]} />
+      {/* soft warm depth haze (atmospheric perspective for layered forest) */}
+      <fogExp2 ref={fogRef} attach="fog" args={['#dfeed6', 0.012]} />
+      {/* glowing dust motes drifting in the light */}
       <points ref={motesRef} geometry={geometry} frustumCulled={false}>
         <pointsMaterial
           map={soft}
-          size={0.5}
+          size={0.6}
           sizeAttenuation
           transparent
           depthWrite={false}
-          color="#fff4d6"
-          opacity={0.25}
+          color="#fff2cf"
+          opacity={0.32}
           blending={THREE.AdditiveBlending}
         />
       </points>

@@ -34,11 +34,11 @@ export default function WorldExperience() {
       >
         <Canvas
           shadows
-          dpr={[1, lowPerf ? 1.5 : 2]}
+          dpr={[1, lowPerf ? 1.2 : 1.5]}
           gl={{ antialias: true, powerPreference: 'high-performance' }}
           onCreated={({ gl, scene }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
-            gl.toneMappingExposure = 1.05;
+            gl.toneMappingExposure = 1.14;
             if (import.meta.env.DEV) Object.assign(window as object, { __gl: gl, __scene: scene });
           }}
         >
@@ -49,6 +49,24 @@ export default function WorldExperience() {
           <AdaptiveDpr pixelated />
           <AdaptiveEvents />
         </Canvas>
+
+        {/* Cinematic colour grade — warm glow lift (screen) + soft vignette,
+            for the stylized Genshin / Ni-no-Kuni atmosphere without postFX. */}
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
+          background: 'radial-gradient(120% 100% at 50% 38%, rgba(255,236,190,0.22) 0%, rgba(255,214,150,0.06) 35%, rgba(40,60,40,0.0) 60%)',
+          mixBlendMode: 'screen',
+        }} />
+        {/* soft diagonal sun-ray streaks from the upper-right (matches the sun) */}
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2, opacity: 0.6,
+          background: 'linear-gradient(108deg, transparent 28%, rgba(255,242,205,0.10) 40%, transparent 45%, transparent 56%, rgba(255,238,195,0.07) 66%, transparent 72%)',
+          mixBlendMode: 'screen',
+        }} />
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
+          background: 'radial-gradient(130% 110% at 50% 45%, rgba(0,0,0,0) 55%, rgba(20,30,18,0.28) 100%)',
+        }} />
       </div>
 
       {/* Tall spacer gives the page its scroll length. Pointer-events off so the
