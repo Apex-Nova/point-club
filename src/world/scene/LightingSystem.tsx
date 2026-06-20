@@ -23,26 +23,27 @@ export default function LightingSystem() {
         mieDirectionalG={0.92}
       />
 
-      {/* warm directional key (the sun), casts soft shadows */}
+      {/* warm directional key (the sun) — softened for a stylized, low-contrast
+          look (no harsh shadows, no dark areas) */}
       <directionalLight
         position={SUN}
-        intensity={2.6}
-        color="#ffe1ac"
+        intensity={2.0}
+        color="#ffe7bd"
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.0004}
-        shadow-normalBias={0.04}
+        shadow-normalBias={0.05}
         shadow-camera-near={1}
-        shadow-camera-far={90}
-        shadow-camera-left={-45}
-        shadow-camera-right={45}
-        shadow-camera-top={45}
-        shadow-camera-bottom={-45}
+        shadow-camera-far={70}
+        shadow-camera-left={-32}
+        shadow-camera-right={32}
+        shadow-camera-top={32}
+        shadow-camera-bottom={-32}
       />
-      {/* cool ambient bounce from the sky / warm bounce from the ground */}
-      <hemisphereLight args={['#cfe8ff', '#6a572f', 0.85]} />
-      {/* gentle fill so shadows never go black */}
-      <ambientLight intensity={0.45} color="#fff1d6" />
+      {/* strong soft GI feel: cool sky bounce + warm ground bounce */}
+      <hemisphereLight args={['#dbeeff', '#7a6438', 1.1]} />
+      {/* generous fill so shadows stay luminous and inviting */}
+      <ambientLight intensity={0.62} color="#fff3da" />
 
       {/* Soft procedural IBL for gentle reflections (matters for copper in Phase 2). */}
       <Environment resolution={128}>

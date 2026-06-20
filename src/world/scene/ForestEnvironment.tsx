@@ -5,7 +5,7 @@ import { FOLIAGE, USN_COLLECTIONS } from '../config/assets';
 import { WORLD } from '../config/worldConfig';
 import { heightAt } from '../config/terrain';
 import { makeRng, scatter, scaleCount } from '../utils/placement';
-import ScatterLayer from './foliage/ScatterLayer';
+import InstancedScatter from './foliage/InstancedScatter';
 import CollectionScatter from './foliage/CollectionScatter';
 import GrassField from './foliage/GrassField';
 
@@ -85,36 +85,36 @@ export default function ForestEnvironment({ lowPerf = false }: { lowPerf?: boole
       {/* background → midground → foreground draw order */}
       <CollectionScatter collections={USN_WALL} placements={layers.usnWall.placements}
         targetHeight={9} wind={{ strength: 0.06, pivot: 5 }} castShadow={false} />
-      <ScatterLayer models={layers.bgTrees.models} placements={layers.bgTrees.placements}
-        wind={{ strength: 0.07, pivot: 6 }} castShadow={false} />
+      <InstancedScatter models={layers.bgTrees.models} placements={layers.bgTrees.placements}
+        wind={{ strength: 0.07, pivot: 6 }} />
       <CollectionScatter collections={USN_MID} placements={layers.usnMid.placements}
         targetHeight={6} wind={{ strength: 0.12, pivot: 3.5 }} castShadow={false} />
-      <ScatterLayer models={layers.trees.models} placements={layers.trees.placements}
-        wind={{ strength: 0.12, pivot: 4.5 }} castShadow={false} />
+      <InstancedScatter models={layers.trees.models} placements={layers.trees.placements}
+        wind={{ strength: 0.12, pivot: 4.5 }} />
       <CollectionScatter collections={USN_MID} placements={layers.saplings.placements}
         targetHeight={6} wind={{ strength: 0.2, pivot: 1.6 }} castShadow={false} />
-      <ScatterLayer models={layers.bushes.models} placements={layers.bushes.placements}
-        wind={{ strength: 0.22, pivot: 1.2 }} castShadow={false} />
+      <InstancedScatter models={layers.bushes.models} placements={layers.bushes.placements}
+        wind={{ strength: 0.22, pivot: 1.2 }} />
       <CollectionScatter collections={[U.bushes, U.flowerBushes]} placements={layers.usnBushes.placements}
         targetHeight={1.1} wind={{ strength: 0.24, pivot: 0.8 }} castShadow={false} />
-      <ScatterLayer models={layers.rocks.models} placements={layers.rocks.placements}
-        wind={false} castShadow={false} receiveShadow />
+      <InstancedScatter models={layers.rocks.models} placements={layers.rocks.placements}
+        wind={false} receiveShadow />
       <CollectionScatter collections={[U.rocks]} placements={layers.usnRocks.placements}
-        targetHeight={1.6} wind={false} castShadow receiveShadow />
-      <ScatterLayer models={layers.undergrowth.models} placements={layers.undergrowth.placements}
-        wind={{ strength: 0.28, pivot: 0.9 }} castShadow={false} tints={UNDERGROWTH_TINTS} />
-      <ScatterLayer models={layers.ferns.models} placements={layers.ferns.placements}
-        wind={{ strength: 0.3, pivot: 0.8 }} castShadow={false} />
-      <ScatterLayer models={layers.flowers.models} placements={layers.flowers.placements}
-        wind={{ strength: 0.35, pivot: 0.5 }} castShadow={false} />
+        targetHeight={1.6} wind={false} castShadow={false} receiveShadow />
+      <InstancedScatter models={layers.undergrowth.models} placements={layers.undergrowth.placements}
+        wind={{ strength: 0.28, pivot: 0.9 }} />
+      <InstancedScatter models={layers.ferns.models} placements={layers.ferns.placements}
+        wind={{ strength: 0.3, pivot: 0.8 }} />
+      <InstancedScatter models={layers.flowers.models} placements={layers.flowers.placements}
+        wind={{ strength: 0.35, pivot: 0.5 }} />
       <CollectionScatter collections={[U.flowers]} placements={layers.usnFlowers.placements}
         targetHeight={0.6} wind={{ strength: 0.38, pivot: 0.4 }} castShadow={false} />
-      <ScatterLayer models={layers.petals.models} placements={layers.petals.placements}
-        wind={{ strength: 0.4, pivot: 0.3 }} castShadow={false} />
-      <ScatterLayer models={layers.mushrooms.models} placements={layers.mushrooms.placements}
-        wind={false} castShadow />
-      <ScatterLayer models={layers.pebbles.models} placements={layers.pebbles.placements}
-        wind={false} castShadow={false} receiveShadow />
+      <InstancedScatter models={layers.petals.models} placements={layers.petals.placements}
+        wind={{ strength: 0.4, pivot: 0.3 }} />
+      <InstancedScatter models={layers.mushrooms.models} placements={layers.mushrooms.placements}
+        wind={false} />
+      <InstancedScatter models={layers.pebbles.models} placements={layers.pebbles.placements}
+        wind={false} receiveShadow />
 
       {/* Layered grass species for a dense, varied lawn that hugs the terrain. */}
       {FOLIAGE.grassSpecies.map((m, i) => (
@@ -182,20 +182,34 @@ function Ground() {
   }, []);
 
   const material = useMemo(() => {
-    const mat = new THREE.MeshStandardMaterial({ color: '#5d7c3f', roughness: 1, metalness: 0 });
+    const mat = new THREE.MeshStandardMaterial({ color: '#5f8a40', roughness: 1, metalness: 0 });
     mat.onBeforeCompile = shader => {
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying float vDist;\nvarying float vH;')
+        .replace('#include <common>', '#include <common>\nvarying float vDist;\nvarying float vH;\nvarying vec2 vXZ;')
         .replace('#include <begin_vertex>',
-          '#include <begin_vertex>\nvDist = length(position.xz);\nvH = position.y;');
+          '#include <begin_vertex>\nvDist = length(position.xz);\nvH = position.y;\nvXZ = position.xz;');
       shader.fragmentShader = shader.fragmentShader
-        .replace('#include <common>', '#include <common>\nvarying float vDist;\nvarying float vH;')
+        .replace('#include <common>', `#include <common>
+          varying float vDist; varying float vH; varying vec2 vXZ;
+          // cheap value-noise for a painterly dirt/moss/grass blend
+          float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+          float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+            return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y); }`)
         .replace('#include <dithering_fragment>',
           `#include <dithering_fragment>
-          // hilltops lighter, hollows darker; deepen the rim into shadow
-          gl_FragColor.rgb *= 1.0 + clamp(vH, -1.0, 6.0) * 0.03;
+          // painterly forest floor: grass ↔ moss ↔ dirt, broken up by noise
+          vec3 grass = vec3(0.36, 0.52, 0.24);
+          vec3 moss  = vec3(0.28, 0.42, 0.20);
+          vec3 dirt  = vec3(0.42, 0.33, 0.21);
+          float n  = vnoise(vXZ * 0.18);
+          float n2 = vnoise(vXZ * 0.7 + 11.3);
+          vec3 floorCol = mix(moss, grass, smoothstep(0.35, 0.75, n));
+          floorCol = mix(floorCol, dirt, smoothstep(0.62, 0.92, n2) * 0.5);     // patches of bare earth
+          floorCol *= 0.92 + n2 * 0.16;                                          // fine variation
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, floorCol, 0.85);
+          gl_FragColor.rgb *= 1.0 + clamp(vH, -1.0, 6.0) * 0.025;                // height shading
           float edge = smoothstep(${(WORLD.groundRadius * 0.5).toFixed(1)}, ${(WORLD.groundRadius * 1.15).toFixed(1)}, vDist);
-          gl_FragColor.rgb *= mix(1.0, 0.45, edge);`);
+          gl_FragColor.rgb *= mix(1.0, 0.55, edge);`);
     };
     return mat;
   }, []);

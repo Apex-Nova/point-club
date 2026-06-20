@@ -94,8 +94,9 @@ export default function CopperGolem() {
       <group ref={inner}>
         <primitive object={model} />
       </group>
-      {/* brush attached at the hand */}
-      <group ref={brushPivot} position={[0.32, GOLEM.height * 0.52, 0.34]} rotation={[-0.4, 0, 0]}>
+      {/* brush attached at the FRONT hand (model's facing side), angled forward
+          so it reads as held out toward the canvas while painting/cleaning */}
+      <group ref={brushPivot} position={[0.34, GOLEM.height * 0.42, -0.44]} rotation={[0.5, 0, 0]}>
         <primitive object={brush} />
       </group>
     </group>

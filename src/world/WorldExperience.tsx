@@ -39,6 +39,7 @@ export default function WorldExperience() {
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = 1.05;
+            if (import.meta.env.DEV) (window as unknown as { __gl: THREE.WebGLRenderer }).__gl = gl;
           }}
         >
           <Suspense fallback={null}>

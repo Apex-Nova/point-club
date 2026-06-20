@@ -18,7 +18,7 @@ const BUTTERFLY_HAUNTS: [number, number, number][] = [
 ];
 
 export default function Fauna({ lowPerf = false }: { lowPerf?: boolean }) {
-  const fishCount = lowPerf ? 3 : 6;
+  const fishCount = lowPerf ? 3 : 4;
   const flutterCount = lowPerf ? 5 : 9;
   return (
     <group name="Fauna">
@@ -50,8 +50,8 @@ function Fish({ index }: { index: number }) {
       r: 1.2 + (index % 3) * 1.3,
       speed: 0.25 + (index % 4) * 0.08,
       phase: index * 1.7,
-      depth: WORLD.pond.waterY - 0.35 - (index % 2) * 0.2,
-      scale: 0.5 + (index % 3) * 0.12,
+      depth: WORLD.pond.waterY - 0.3 - (index % 2) * 0.15,
+      scale: 0.3 + (index % 3) * 0.08,
     };
   }, [index]);
 

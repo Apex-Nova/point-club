@@ -13,7 +13,9 @@ import { WORLD } from '../config/worldConfig';
  */
 export default function CameraRig() {
   const camRef = useRef<THREE.PerspectiveCamera>(null);
-  const target = useMemo(() => new THREE.Vector3(WORLD.workshopPosition[0], 1.6, WORLD.workshopPosition[2]), []);
+  // Look slightly above the workshop so the easel/golem sit in frame and the
+  // background forest + sky stay visible above them.
+  const target = useMemo(() => new THREE.Vector3(WORLD.workshopPosition[0], 2.4, WORLD.workshopPosition[2]), []);
   const pointer = useRef({ x: 0, y: 0 });
 
   useFrame(({ clock, pointer: p }, _delta) => {
@@ -26,29 +28,31 @@ export default function CameraRig() {
     pointer.current.x += (p.x - pointer.current.x) * 0.04;
     pointer.current.y += (p.y - pointer.current.y) * 0.04;
 
-    // base position: elevated, wide; pushes in + lowers slightly as you scroll
-    const baseDist = THREE.MathUtils.lerp(20, 14, scroll);
-    const baseHeight = THREE.MathUtils.lerp(8.5, 6.0, scroll);
+    // Near ground-level: the viewer stands at the edge of the clearing looking
+    // INTO the golem's world. Low height keeps a sense of scale; pushes in a
+    // touch as you scroll. Never top-down.
+    const baseDist = THREE.MathUtils.lerp(15.5, 12, scroll);
+    const baseHeight = THREE.MathUtils.lerp(3.7, 2.9, scroll);
 
     // gentle floating drift (non-repetitive)
-    const driftX = Math.sin(t * 0.18) * 0.9 + Math.sin(t * 0.07) * 0.5;
-    const driftY = Math.cos(t * 0.15) * 0.45;
+    const driftX = Math.sin(t * 0.16) * 0.7 + Math.sin(t * 0.07) * 0.4;
+    const driftY = Math.cos(t * 0.13) * 0.22;
 
-    cam.position.x = driftX + pointer.current.x * 2.4;
-    cam.position.y = baseHeight + driftY + pointer.current.y * 1.2;
+    cam.position.x = driftX + pointer.current.x * 1.8;
+    cam.position.y = baseHeight + driftY + pointer.current.y * 0.8;
     cam.position.z = baseDist;
 
-    cam.lookAt(target.x + pointer.current.x * 1.2, target.y, target.z);
+    cam.lookAt(target.x + pointer.current.x * 1.0, target.y, target.z);
   });
 
   return (
     <PerspectiveCamera
       ref={camRef}
       makeDefault
-      fov={42}
-      near={0.5}
+      fov={46}
+      near={0.3}
       far={300}
-      position={[0, 8.5, 20]}
+      position={[0, 3.0, 14]}
     />
   );
 }

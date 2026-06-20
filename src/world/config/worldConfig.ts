@@ -25,21 +25,24 @@ export const WORLD = {
     pebbles: 55,
     mushrooms: 24,
     ferns: 38,
-    grass: 12000,     // instanced, layered species
+    grass: 8500,      // instanced, layered species
   },
 
   /** Pond + waterfall feature (terrain is carved/raised to suit). Placed
    *  front-left of the workshop so it sits naturally in the camera framing. */
+  // Composition: waterfall → pond → workshop → camera, all on one axis. The
+  // camera sits at +z looking toward the workshop, so the water is set BEHIND
+  // the workshop at lower z (further from the viewer), framed by the forest.
   pond: {
-    center: [-8, 0, 7] as [number, number, number],
-    radius: 4.6,
-    depth: 1.1,        // basin depth below platform level
-    waterY: -0.35,     // water surface height
+    center: [2.5, 0, -7] as [number, number, number],
+    radius: 5,
+    depth: 1.2,        // basin depth below platform level
+    waterY: -0.55,     // water surface height (below clearing ground)
   },
   waterfall: {
-    position: [-14, 0, 11.5] as [number, number, number],
-    scale: 5,
-    rotationY: 2.4,    // face the falls toward the pond/camera
+    position: [2.5, 0, -12] as [number, number, number],
+    scale: 5.5,
+    rotationY: 0,      // falls face the camera/pond (+z)
   },
 
   /** Clear radius around the workshop so props are never buried in foliage. */

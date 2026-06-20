@@ -50,16 +50,25 @@ export default function CanvasWorkshop() {
   );
 }
 
-/** Raised circular wooden deck defining the studio floor. */
+/** Raised circular wooden deck defining the studio floor. It sits clearly above
+ *  the clearing ground (CLEARING_GROUND ≈ -0.18) with a visible wooden rim and
+ *  thickness, so it reads as a handcrafted platform — the centre of the scene. */
 function Platform() {
   return (
     <group>
-      <mesh receiveShadow castShadow position={[0, 0.1, 0]}>
-        <cylinderGeometry args={[5.2, 5.4, 0.2, 48]} />
-        <meshStandardMaterial color="#6b4f32" roughness={0.9} />
+      {/* thick raised body (top at PLATFORM_TOP, base sunk well into the ground) */}
+      <mesh receiveShadow castShadow position={[0, T - 0.4, 0]}>
+        <cylinderGeometry args={[5.0, 5.25, 0.8, 56]} />
+        <meshStandardMaterial color="#6b4f32" roughness={0.95} />
       </mesh>
-      <mesh receiveShadow position={[0, 0.21, 0]}>
-        <cylinderGeometry args={[5.0, 5.0, 0.02, 48]} />
+      {/* wooden rim lip standing proud of the dirt top */}
+      <mesh castShadow receiveShadow position={[0, T - 0.02, 0]}>
+        <cylinderGeometry args={[5.08, 5.08, 0.16, 56, 1, true]} />
+        <meshStandardMaterial color="#7a5230" roughness={0.8} side={THREE.DoubleSide} />
+      </mesh>
+      {/* packed-dirt studio floor surface */}
+      <mesh receiveShadow position={[0, T, 0]}>
+        <cylinderGeometry args={[5.0, 5.0, 0.04, 56]} />
         <meshStandardMaterial color="#7c5d3c" roughness={0.85} />
       </mesh>
     </group>
