@@ -18,6 +18,7 @@ export interface GolemPose {
   wiggle: number;     // sideways body wiggle (rad)
   roll: number;       // full-body roll (acrobatics)
   scale: number;      // scale multiplier (fourth-wall emerge)
+  stride: number;     // leg swing phase while walking (-1..1)
 }
 
 type Phase = 'travel' | 'work';
@@ -33,7 +34,7 @@ interface Special {
 export class GolemController {
   readonly pose: GolemPose = {
     position: STATIONS.easel.clone(),
-    yaw: 0, lean: 0, bob: 0, squash: 1, brushSwing: 0, wiggle: 0, roll: 0, scale: 1,
+    yaw: 0, lean: 0, bob: 0, squash: 1, brushSwing: 0, wiggle: 0, roll: 0, scale: 1, stride: 0,
   };
   readonly cursor = new CursorTracker();
 
@@ -61,6 +62,7 @@ export class GolemController {
     if (s.fourthWall !== 'none') { this.updateFourthWall(dt, camera, s.fourthWall); return; }
     this.pose.scale = damp(this.pose.scale, 1, 6, dt);
     this.pose.roll = damp(this.pose.roll, 0, 8, dt);
+    this.pose.stride = damp(this.pose.stride, 0, 8, dt); // legs settle when not walking
 
     // one-shot special actions take priority over the task gesture
     if (this.special) { this.runSpecial(dt); }
@@ -353,6 +355,7 @@ export class GolemController {
     this.tmp.normalize().multiplyScalar(step);
     p.x += this.tmp.x; p.z += this.tmp.z;
     const stride = Math.sin(performance.now() * 0.001 * GOLEM.stepRate * Math.PI * 2);
+    this.pose.stride = stride;                 // drives the leg swing
     this.pose.bob = Math.abs(stride) * GOLEM.bobHeight;
     this.pose.squash = 1 + stride * 0.025;     // subtle weight shift
     this.pose.wiggle = stride * 0.04;          // gentle waddle

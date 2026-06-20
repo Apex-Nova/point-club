@@ -36,10 +36,10 @@ export default function WorldExperience() {
           shadows
           dpr={[1, lowPerf ? 1.5 : 2]}
           gl={{ antialias: true, powerPreference: 'high-performance' }}
-          onCreated={({ gl }) => {
+          onCreated={({ gl, scene }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
             gl.toneMappingExposure = 1.05;
-            if (import.meta.env.DEV) (window as unknown as { __gl: THREE.WebGLRenderer }).__gl = gl;
+            if (import.meta.env.DEV) Object.assign(window as object, { __gl: gl, __scene: scene });
           }}
         >
           <Suspense fallback={null}>
