@@ -19,6 +19,7 @@ export interface GolemPose {
   roll: number;       // full-body roll (acrobatics)
   scale: number;      // scale multiplier (fourth-wall emerge)
   stride: number;     // leg swing phase while walking (-1..1)
+  armExtend: number;  // how far the painting arm reaches forward (0..1)
 }
 
 type Phase = 'travel' | 'work';
@@ -34,7 +35,7 @@ interface Special {
 export class GolemController {
   readonly pose: GolemPose = {
     position: STATIONS.easel.clone(),
-    yaw: 0, lean: 0, bob: 0, squash: 1, brushSwing: 0, wiggle: 0, roll: 0, scale: 1, stride: 0,
+    yaw: 0, lean: 0, bob: 0, squash: 1, brushSwing: 0, wiggle: 0, roll: 0, scale: 1, stride: 0, armExtend: 0,
   };
   readonly cursor = new CursorTracker();
 
@@ -62,7 +63,8 @@ export class GolemController {
     if (s.fourthWall !== 'none') { this.updateFourthWall(dt, camera, s.fourthWall); return; }
     this.pose.scale = damp(this.pose.scale, 1, 6, dt);
     this.pose.roll = damp(this.pose.roll, 0, 8, dt);
-    this.pose.stride = damp(this.pose.stride, 0, 8, dt); // legs settle when not walking
+    this.pose.stride = damp(this.pose.stride, 0, 8, dt);   // legs settle when not walking
+    this.pose.armExtend = damp(this.pose.armExtend, 0, 6, dt); // arm retracts by default
 
     // one-shot special actions take priority over the task gesture
     if (this.special) { this.runSpecial(dt); }
@@ -104,8 +106,9 @@ export class GolemController {
     switch (task) {
       case 'paint': {
         this.faceLook(CANVAS_FOCUS, dt);
-        this.pose.lean = damp(this.pose.lean, 0.22, 5, dt);
-        this.pose.brushSwing = Math.sin(this.gestureT * 4.5) * 0.8;
+        this.pose.lean = damp(this.pose.lean, 0.14, 5, dt);
+        this.pose.armExtend = damp(this.pose.armExtend, 0.55, 5, dt); // reach to the canvas
+        this.pose.brushSwing = Math.sin(this.gestureT * 4.5) * 0.8;   // stroke / dab
         this.pose.bob = damp(this.pose.bob, Math.sin(this.gestureT * 4.5) * 0.02, 6, dt);
         this.paintAccum += dt;
         if (this.paintAccum > 1.6 && !artworkComplete()) {
@@ -305,15 +308,18 @@ export class GolemController {
         break;
       }
       case 'clean': {
-        // big, slow, clearly-visible scrubbing centred on the stain
-        const front = this.frontOfCamera(camera, 7.5, -0.45);
-        this.pose.position.lerp(front, 1 - Math.exp(-6 * dt));
+        // Stand upright a readable distance from the screen and CLEAN WITH THE
+        // ARM + BRUSH — never the head/body (that read as licking). The arm
+        // reaches out and sweeps; the body stays calm.
+        const front = this.frontOfCamera(camera, 9, -0.35);
+        this.pose.position.lerp(front, 1 - Math.exp(-5 * dt));
         this.faceLook(this.camPos, dt, 8);
-        this.pose.scale = damp(this.pose.scale, 2.0, 4, dt);
-        this.pose.brushSwing = Math.sin(performance.now() * 0.009) * 1.3;     // sweeping wipes
-        this.pose.lean = 0.25 + Math.sin(performance.now() * 0.009) * 0.12;
-        this.pose.wiggle = Math.sin(performance.now() * 0.009) * 0.18;        // whole-body scrub
-        this.pose.bob = Math.abs(Math.sin(performance.now() * 0.018)) * 0.05;
+        this.pose.scale = damp(this.pose.scale, 1.7, 4, dt);
+        this.pose.lean = damp(this.pose.lean, 0.06, 5, dt);   // upright, not lunging
+        this.pose.wiggle = damp(this.pose.wiggle, 0, 5, dt);  // no whole-body scrub
+        this.pose.bob = damp(this.pose.bob, 0, 5, dt);
+        this.pose.armExtend = damp(this.pose.armExtend, 1.0, 4, dt);          // reach to the stain
+        this.pose.brushSwing = Math.sin(performance.now() * 0.011) * 1.2;     // wide wiping sweep
         break;
       }
       case 'return': {

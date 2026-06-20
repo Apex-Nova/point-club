@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import { PROPS } from '../config/assets';
 import { WORLD } from '../config/worldConfig';
-import { PLATFORM_TOP } from '../config/terrain';
+import { PLATFORM_TOP, CLEARING_GROUND } from '../config/terrain';
 import PropModel from './workshop/PropModel';
 import { getArtworkTexture } from '../character/canvasArtwork';
 
@@ -50,26 +50,28 @@ export default function CanvasWorkshop() {
   );
 }
 
-/** Raised circular wooden deck defining the studio floor. It sits clearly above
- *  the clearing ground (CLEARING_GROUND ≈ -0.18) with a visible wooden rim and
- *  thickness, so it reads as a handcrafted platform — the centre of the scene. */
+/** Handcrafted wooden studio deck. Built as a flared dirt mound that blends
+ *  into the surrounding ground (no floating ring / gap) topped by a thick
+ *  wooden deck — embedded in the terrain, not hovering above it. */
 function Platform() {
+  const moundH = Math.abs(CLEARING_GROUND) + 0.18;
   return (
     <group>
-      {/* thick raised body (top at PLATFORM_TOP, base sunk well into the ground) */}
-      <mesh receiveShadow castShadow position={[0, T - 0.4, 0]}>
-        <cylinderGeometry args={[5.0, 5.25, 0.8, 56]} />
-        <meshStandardMaterial color="#6b4f32" roughness={0.95} />
+      {/* flared earth mound — wide buried base tapering up, so the platform
+          reads as part of the ground rather than a floating disc */}
+      <mesh receiveShadow position={[0, CLEARING_GROUND - 0.05, 0]}>
+        <cylinderGeometry args={[5.1, 6.8, moundH, 56]} />
+        <meshStandardMaterial color="#574629" roughness={1} />
       </mesh>
-      {/* wooden rim lip standing proud of the dirt top */}
-      <mesh castShadow receiveShadow position={[0, T - 0.02, 0]}>
-        <cylinderGeometry args={[5.08, 5.08, 0.16, 56, 1, true]} />
-        <meshStandardMaterial color="#7a5230" roughness={0.8} side={THREE.DoubleSide} />
+      {/* thick wooden deck (top at PLATFORM_TOP) */}
+      <mesh receiveShadow castShadow position={[0, T - 0.16, 0]}>
+        <cylinderGeometry args={[5.0, 5.15, 0.34, 56]} />
+        <meshStandardMaterial color="#7a5230" roughness={0.85} />
       </mesh>
-      {/* packed-dirt studio floor surface */}
-      <mesh receiveShadow position={[0, T, 0]}>
-        <cylinderGeometry args={[5.0, 5.0, 0.04, 56]} />
-        <meshStandardMaterial color="#7c5d3c" roughness={0.85} />
+      {/* packed-earth studio floor on top of the deck */}
+      <mesh receiveShadow position={[0, T + 0.001, 0]}>
+        <cylinderGeometry args={[4.85, 4.92, 0.05, 56]} />
+        <meshStandardMaterial color="#876746" roughness={0.9} />
       </mesh>
     </group>
   );

@@ -98,14 +98,16 @@ export default function CopperGolem() {
     }
 
     // ── drive the limbs ──────────────────────────────────────────────
-    const { stride, brushSwing, wiggle: wig } = controller.pose;
+    const { stride, brushSwing, wiggle: wig, armExtend } = controller.pose;
     const { nodes, rest } = built;
     // legs alternate, swinging from the hip during a walk
     if (nodes.legR && rest.legR) nodes.legR.rotation.x = rest.legR.x + stride * 0.7;
     if (nodes.legL && rest.legL) nodes.legL.rotation.x = rest.legL.x - stride * 0.7;
-    // right arm paints (brushSwing) + counter-swings while walking
+    // right arm: reaches FORWARD (armExtend) toward canvas/screen, with the
+    // brush sweeping. Lateral sweep is gated by armExtend so idle doesn't flail.
     if (nodes.armR && rest.armR) {
-      nodes.armR.rotation.x = rest.armR.x - 0.25 + brushSwing * 0.85 - stride * 0.25;
+      nodes.armR.rotation.x = rest.armR.x - 0.25 - armExtend * 0.85 + brushSwing * 0.22 - stride * 0.2;
+      nodes.armR.rotation.z = rest.armR.z + brushSwing * 0.5 * armExtend; // wiping/stroke sweep
     }
     // left arm swings opposite for natural locomotion
     if (nodes.armL && rest.armL) nodes.armL.rotation.x = rest.armL.x + 0.1 + stride * 0.5;

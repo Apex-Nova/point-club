@@ -31,8 +31,10 @@ export default function CameraRig() {
     // Near ground-level: the viewer stands at the edge of the clearing looking
     // INTO the golem's world. Low height keeps a sense of scale; pushes in a
     // touch as you scroll. Never top-down.
-    const baseDist = THREE.MathUtils.lerp(15.5, 12, scroll);
-    const baseHeight = THREE.MathUtils.lerp(3.7, 2.9, scroll);
+    // Pulled back + wide so the world reads ~70% / platform ~30%; still low and
+    // looking slightly across the scene (never top-down).
+    const baseDist = THREE.MathUtils.lerp(19, 15, scroll);
+    const baseHeight = THREE.MathUtils.lerp(3.6, 3.0, scroll);
 
     // gentle floating drift (non-repetitive)
     const driftX = Math.sin(t * 0.16) * 0.7 + Math.sin(t * 0.07) * 0.4;
@@ -49,10 +51,10 @@ export default function CameraRig() {
     <PerspectiveCamera
       ref={camRef}
       makeDefault
-      fov={46}
+      fov={50}
       near={0.3}
       far={300}
-      position={[0, 3.0, 14]}
+      position={[0, 3.6, 19]}
     />
   );
 }

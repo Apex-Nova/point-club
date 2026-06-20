@@ -7,6 +7,7 @@ import CanvasWorkshop from './CanvasWorkshop';
 import WaterFeature from './WaterFeature';
 import Fauna from './Fauna';
 import AtmosphereSystem from './AtmosphereSystem';
+import FallingLeaves from './FallingLeaves';
 import ParticleSystem from './ParticleSystem';
 import WindUpdater from './WindUpdater';
 import CopperGolem from './characters/CopperGolem';
@@ -50,6 +51,7 @@ export default function WorldRoot({ lowPerf = false }: { lowPerf?: boolean }) {
       </Suspense>
 
       <AtmosphereSystem lowPerf={lowPerf} />
+      <FallingLeaves lowPerf={lowPerf} />
       <ParticleSystem lowPerf={lowPerf} />
     </group>
   );

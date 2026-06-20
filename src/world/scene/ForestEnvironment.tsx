@@ -40,7 +40,10 @@ export default function ForestEnvironment({ lowPerf = false }: { lowPerf?: boole
   const [wx, , wz] = WORLD.workshopPosition;
   const [px, , pz] = WORLD.pond.center;
   const pondAvoid = { x: px, z: pz, r: WORLD.pond.radius + 1.5 };
-  const avoid = [{ x: wx, z: wz, r: hole }, pondAvoid];
+  // Keep a clear viewing bubble around the camera's resting spot (+z) so near
+  // foliage frames the shot instead of blocking the lens.
+  const camClear = { x: wx, z: wz + 17, r: 8 };
+  const avoid = [{ x: wx, z: wz, r: hole }, pondAvoid, camClear];
 
   const layers = useMemo(() => {
     const mk = (
@@ -116,14 +119,16 @@ export default function ForestEnvironment({ lowPerf = false }: { lowPerf?: boole
       <InstancedScatter models={layers.pebbles.models} placements={layers.pebbles.placements}
         wind={false} receiveShadow />
 
-      {/* Layered grass species for a dense, varied lawn that hugs the terrain. */}
+      {/* Layered grass species — comes right up to the platform mound base so
+          there's no bare ring / floating look around the deck. */}
       {FOLIAGE.grassSpecies.map((m, i) => (
         <GrassField
           key={m}
           model={m}
           seedOffset={i + 1}
+          innerHole={6.4}
           count={scaleCount(Math.round(c.grass / FOLIAGE.grassSpecies.length), lowPerf)}
-          avoid={[pondAvoid]}
+          avoid={[pondAvoid, camClear]}
         />
       ))}
     </group>
