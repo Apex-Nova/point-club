@@ -18,13 +18,9 @@ const BUTTERFLY_HAUNTS: [number, number, number][] = [
 ];
 
 export default function Fauna({ lowPerf = false }: { lowPerf?: boolean }) {
-  const fishCount = lowPerf ? 3 : 4;
   const flutterCount = lowPerf ? 5 : 9;
   return (
     <group name="Fauna">
-      {Array.from({ length: fishCount }).map((_, i) => (
-        <Fish key={i} index={i} />
-      ))}
       {Array.from({ length: flutterCount }).map((_, i) => (
         <Butterfly key={i} index={i} />
       ))}

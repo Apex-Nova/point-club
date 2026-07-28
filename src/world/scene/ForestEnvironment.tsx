@@ -38,12 +38,10 @@ export default function ForestEnvironment({ lowPerf = false }: { lowPerf?: boole
   const hole = WORLD.workshopClearRadius;
   const R = WORLD.groundRadius;
   const [wx, , wz] = WORLD.workshopPosition;
-  const [px, , pz] = WORLD.pond.center;
-  const pondAvoid = { x: px, z: pz, r: WORLD.pond.radius + 1.5 };
   // Keep a clear viewing bubble around the camera's resting spot (+z) so near
   // foliage frames the shot instead of blocking the lens.
   const camClear = { x: wx, z: wz + 17, r: 8 };
-  const avoid = [{ x: wx, z: wz, r: hole }, pondAvoid, camClear];
+  const avoid = [{ x: wx, z: wz, r: hole }, camClear];
 
   const layers = useMemo(() => {
     const mk = (
@@ -128,7 +126,7 @@ export default function ForestEnvironment({ lowPerf = false }: { lowPerf?: boole
           seedOffset={i + 1}
           innerHole={6.4}
           count={scaleCount(Math.round(c.grass / FOLIAGE.grassSpecies.length), lowPerf)}
-          avoid={[pondAvoid, camClear]}
+          avoid={[camClear]}
         />
       ))}
     </group>
@@ -144,17 +142,17 @@ function Path() {
   const stones = useMemo(() => {
     const rng = makeRng(WORLD.seed ^ 0x70a7c0de);
     const out: { pos: [number, number, number]; rot: number; scl: number; idx: number }[] = [];
-    const n = 26;
+    const n = 22;
     for (let i = 0; i < n; i++) {
       const t = i / (n - 1);
-      // S-curve heading out toward +z/-x from the workshop edge
-      const dist = WORLD.workshopClearRadius - 1 + t * 26;
-      const sway = Math.sin(t * Math.PI * 2.2) * 4;
-      const x = wx - dist * 0.5 + sway;
-      const z = wz + dist * 0.86;
+      // Short, gentle walkway from the platform's front edge toward the viewer.
+      // Stops well short of the camera (which pushes in to ~z15) so near stones
+      // never balloon into the lens.
+      const z = wz + 5.5 + t * 6.5;                     // z 6.5 → 12 (stays in the mid-ground)
+      const x = wx - 0.8 + Math.sin(t * Math.PI * 1.3) * 2.0; // soft S-sway around centre
       out.push({
         pos: [x, heightAt(x, z) + 0.02, z],
-        rot: rng() * Math.PI, scl: 0.7 + rng() * 0.6, idx: i % scenes.length,
+        rot: rng() * Math.PI, scl: 0.55 + rng() * 0.35, idx: i % scenes.length,
       });
     }
     return out;

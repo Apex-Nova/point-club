@@ -10,8 +10,6 @@ import { WORLD } from './worldConfig';
  */
 
 const [wx, , wz] = WORLD.workshopPosition;
-const [px, , pz] = WORLD.pond.center;
-const [fx, , fz] = WORLD.waterfall.position;
 
 /** Top surface of the workshop platform (see CanvasWorkshop Platform). */
 export const PLATFORM_TOP = 0.22;
@@ -43,31 +41,13 @@ function bowl(d: number): number {
   return smooth(Math.min(1, Math.max(0, (d - BOWL_INNER) / (BOWL_OUTER - BOWL_INNER)))) * BOWL_HEIGHT;
 }
 
-/** Basin that dips down toward the pond, plus a mound behind the waterfall. */
-function waterShaping(x: number, z: number): number {
-  let h = 0;
-  const dp = Math.hypot(x - px, z - pz);
-  if (dp < WORLD.pond.radius + 4) {
-    // smooth bowl: deepest at centre, easing back up to the rim
-    const t = smooth(Math.min(1, dp / (WORLD.pond.radius + 4)));
-    h -= (1 - t) * WORLD.pond.depth;
-  }
-  const df = Math.hypot(x - fx, z - fz);
-  if (df < 10) {
-    // raised cliff/hill the waterfall pours from
-    const t = smooth(Math.min(1, df / 10));
-    h += (1 - t) * 5.5;
-  }
-  return h;
-}
-
 /** Terrain (grass) height at world (x,z). The clearing floor sits at
  *  CLEARING_GROUND; hills + bowl rim rise beyond. The platform is a separate
  *  raised mesh, so terrain here is intentionally below it. */
 export function heightAt(x: number, z: number): number {
   const d = Math.hypot(x - wx, z - wz);
   const ramp = smooth(Math.min(1, Math.max(0, (d - FLAT_RADIUS) / 14)));
-  return CLEARING_GROUND + hills(x, z) * 0.9 * ramp + bowl(d) + waterShaping(x, z);
+  return CLEARING_GROUND + hills(x, z) * 0.9 * ramp + bowl(d);
 }
 
 /** Surface height the golem/props stand on — the platform top inside the

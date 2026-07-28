@@ -4,7 +4,6 @@ import LightingSystem from './LightingSystem';
 import ForestEnvironment from './ForestEnvironment';
 import HeroTree from './HeroTree';
 import CanvasWorkshop from './CanvasWorkshop';
-import WaterFeature from './WaterFeature';
 import Fauna from './Fauna';
 import AtmosphereSystem from './AtmosphereSystem';
 import FallingLeaves from './FallingLeaves';
@@ -37,10 +36,7 @@ export default function WorldRoot({ lowPerf = false }: { lowPerf?: boolean }) {
       <HeroTree />
       <CanvasWorkshop />
 
-      {/* Pond + waterfall and the wildlife load independently of the core world. */}
-      <Suspense fallback={null}>
-        <WaterFeature />
-      </Suspense>
+      {/* Wildlife loads independently of the core world. */}
       <Suspense fallback={null}>
         <Fauna lowPerf={lowPerf} />
       </Suspense>
